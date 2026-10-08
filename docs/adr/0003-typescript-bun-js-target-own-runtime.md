@@ -8,7 +8,7 @@ O compilador é escrito em TypeScript e roda no Bun; gera JavaScript que roda no
 
 ## Considered Options
 
-- **Rust**: defensável — o professor explora o MiniC em Rust (`nom`) nas aulas da turma de EC, e o MiniC tem parser, type checker, interpretador e TAC como referência; o plugin SWC do Vercel Workflow também é Rust. Rejeitado para o semestre pela curva de aprendizado empilhada com a Entrega 3 a ~2 semanas; reservado para um transform de TS real depois do semestre.
+- **Rust**: defensável — o professor explora o MiniC em Rust (`nom`) nas aulas da turma de EC, e o MiniC tem parser, type checker, interpretador e TAC como referência; o plugin SWC do Vercel Workflow também é Rust. Rejeitado para o semestre porque o autor não tem experiência com Rust: a curva de aprendizado se somaria à de compiladores, com a Entrega 3 a ~2 semanas; reservado para um transform de TS real depois do semestre.
 - **Go**: sem tipos-soma nem cultura de parser combinators, sem referência na disciplina.
 - **Haskell** (SmartTS, turma de CC): fora da zona de conforto, sem TAC pronto.
 - **Bend** como implementação ou alvo: ver ADR 0001.

@@ -231,7 +231,7 @@ flowchart TB
   - os testes diferenciais executam o mesmo programa no Bun sem nenhuma ponte entre linguagens;
   - o esforço de aprendizado do semestre vai para compiladores e durabilidade, e não para uma nova linguagem de implementação, que eu ainda não domino.
 
-  Rust foi a principal alternativa considerada: é a linguagem do MiniC, a linguagem de referência da disciplina para a turma de Engenharia da Computação.
+  Rust foi a principal alternativa considerada: é a linguagem do MiniC, a linguagem de referência da disciplina para a turma de Engenharia da Computação. Como eu não tinha experiência com Rust, aprendê-lo ao mesmo tempo que os conceitos de compiladores aumentaria bastante a complexidade do projeto.
 - **Alvo:** JavaScript, executado no Bun por um runtime mínimo que agenda os `sleep`s e persiste o estado.
 - **TAC (código de três endereços):** cada instrução tem no máximo uma operação, o que torna explícitos os valores intermediários.
 - **CFG (grafo de fluxo de controle):** organiza o TAC em blocos básicos ligados pelos saltos possíveis. É sobre ele que rodam as análises de fluxo de dados (liveness, propagação de constantes).
