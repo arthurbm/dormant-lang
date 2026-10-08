@@ -103,6 +103,12 @@
       "skillPath": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
       "computedHash": "847c8337e21ed18bd40357636354c5e059e1dd589fab6ca5449bd9850fa4c538"
     },
+    "show-me": {
+      "source": "humanlayer/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
+      "computedHash": "43766f53afe7eb9feba0bb7716590c35cbb8d39d4a91eddef50e9566a6f6ae19"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
