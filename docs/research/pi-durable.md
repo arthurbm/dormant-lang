@@ -144,7 +144,7 @@ Outras diferenças: o pi-durable é embutido e local (uma biblioteca sobre um ar
 2. **Política por Step `replay: "safe" | "unsafe"`.** Um Step seguro roda de novo; um inseguro vira erro `interrupted` visível ao Workflow. Pode ser uma anotação ou diretiva no Dormant (seção 2.3).
 3. **Regra "fase sem progresso = falha"**, que pega loops em que o código gerado não avança o checkpoint (seção 2.2).
 4. **`requestId` para iniciar Workflows** e memos first-writer-wins para decisões externas (seção 2.4).
-5. **Um processo por storage, sem lock entre processos**, é uma simplificação aceitável para a v1, e uma equipe experiente fez a mesma escolha (seção 2.6).
+5. **Um processo por storage, sem lock entre processos**, é uma simplificação aceitável para a v1; é a mesma restrição do pi-durable (seção 2.6).
 6. **`sleep` durável.** O `sleep(until)` do runtime de tasks espera em memória (`spec.md:1856`). Para sobreviver a restart, o horário de acordar precisa estar no checkpoint, como o spec faz com provedores adiados: "a durable phase containing their handle and next poll time" (`spec.md:1930-1933`).
 
 **Interpretador com replay (Entrega 3)**
@@ -155,7 +155,7 @@ Outras diferenças: o pi-durable é embutido e local (uma biblioteca sobre um ar
 
 **Compilador com snapshot (Entrega 4)**
 1. **O formato de saída já tem referência concreta.** `phases` + `checkpoint` com campo `phase`, `waiting` com `on`/`policy` e `migrate(checkpoint, fromVersion)` (seção 2.2). O ADR 0003 já adota isso como referência inicial.
-2. **O argumento da tese ficou mais forte.** A própria Earendil usa replay justamente onde não consegue fazer snapshot: o estado de uma VM QuickJS é opaco (seção 2.7). Um compilador que conhece o programa, faz análise de *liveness* (descobrir quais variáveis ainda serão lidas depois de cada ponto) e gera a máquina de estados dispensa o replay até para código linear. Esse é exatamente o quadrante do Dormant.
+2. **O argumento da tese ficou mais forte.** No pi-durable, o replay aparece justamente no componente cujo estado fica dentro de uma VM QuickJS opaca (seção 2.7), enquanto as tasks, de estado explícito, usam checkpoint. Um compilador que conhece o programa, faz análise de *liveness* (descobrir quais variáveis ainda serão lidas depois de cada ponto) e gera a máquina de estados dispensa o replay até para código linear. Esse é exatamente o quadrante do Dormant.
 3. **Versionamento assistido pelo compilador.** Se uma mudança no Workflow altera o conjunto de variáveis vivas num Ponto de suspensão, o compilador pode avisar que é preciso um `migrate`. Nem o pi-durable nem os sistemas de replay fazem isso.
 
 **Testes**
@@ -164,7 +164,7 @@ Outras diferenças: o pi-durable é embutido e local (uma biblioteca sobre um ar
 3. **Teste de divergência.** Alterar o Workflow entre o crash e a retomada e verificar que o replay falha com diagnóstico em vez de seguir com estado errado.
 
 **Posicionamento**
-- **A tabela de quadrantes da proposta precisa de nota.** Desde a 1.2.0, o pi-durable ocupa dois lugares: "snapshot escrito à mão" (tasks) e "código linear + replay" (Code Mode). O quadrante "código linear + snapshot gerado por compilador" continua vazio.
+- **A tabela de quadrantes do documento de design (`design.md`) precisa de nota.** Desde a 1.2.0, o pi-durable ocupa dois lugares: "snapshot escrito à mão" (tasks) e "código linear + replay" (Code Mode). O quadrante "código linear + snapshot gerado por compilador" continua vazio.
 - **O pi-durable não torna o Dormant redundante.** Ele é uma biblioteca de runtime sem transformação em tempo de compilação. O Dormant é a camada que gera, a partir de código linear, a máquina de estados que o pi-durable pede para escrever à mão.
 - **Saída futura.** O ADR 0003 já prevê trocar o runtime próprio pelo do pi-durable mudando só o gerador de código. Com o formato atual de `defineTask`, isso continua plausível.
 

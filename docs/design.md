@@ -1,14 +1,13 @@
 ---
 title: "Dormant: workflows duráveis compilados"
-subtitle: "Documento de design da v1"
-author: "Arthur Brito — Engenharia da Computação"
-date: "Outubro de 2026"
+subtitle: "Documento de design"
+author: "Arthur Brito"
 lang: pt-BR
 ---
 
 # Dormant: workflows duráveis compilados
 
-> **Documento de design da v1.** Projeto individual desenvolvido na disciplina de Construção de Compiladores (CIn-UFPE, 2026.2).
+> **Documento de design.** Descreve a linguagem, a tese e a arquitetura, e é atualizado conforme a implementação avança. Projeto desenvolvido na disciplina de Construção de Compiladores (CIn-UFPE, 2026.2); o plano de marcos está em `roadmap.md`.
 >
 > **Autor:** Arthur Brito
 
@@ -16,7 +15,7 @@ lang: pt-BR
 
 O **Dormant** é um subconjunto sintático de TypeScript com semântica estendida para **workflows duráveis**: funções que podem pausar por horas ou dias e retomar exatamente de onde pararam, mesmo depois que o processo reinicia.
 
-A proposta é que **o compilador transforme código escrito de forma linear em uma máquina de estados retomável**, usando análise de variáveis vivas sobre código de três endereços (TAC) para persistir apenas o estado necessário em cada pausa. O projeto percorre todas as etapas da disciplina:
+A proposta é que **o compilador transforme código escrito de forma linear em uma máquina de estados retomável**, usando análise de variáveis vivas sobre código de três endereços (TAC) para persistir apenas o estado necessário em cada pausa. O projeto percorre todas as etapas de um compilador:
 
 - parser (com parser combinators);
 - verificação de tipos;
@@ -116,14 +115,14 @@ Nenhuma das duas estratégias é melhor em geral: são pontos diferentes de um e
 
 ## 4. Panorama e posicionamento
 
-O **pi-durable** (Earendil, lançado com o Pi 1.0 em outubro de 2026) mostra que um time experiente escolhe snapshot de propósito, especialmente para agentes, onde o código muda o tempo todo e o estado (a conversa) já é explícito. Porém o programador precisa **escrever a máquina de estados à mão**: dividir a tarefa em fases nomeadas e decidir o que vai em cada checkpoint. Esquecer uma variável no checkpoint gera um erro que só aparece depois de uma retomada; salvar demais encarece o armazenamento e as migrações.
+O **pi-durable** (Earendil, lançado com o Pi 1.0 em outubro de 2026) usa snapshot nas suas *tasks*: em vez de reexecutar código, grava a cada passo um checkpoint com a fase atual e os dados necessários, e ao retomar chama diretamente a fase registrada, sem exigir determinismo. O custo é que o programador precisa **escrever a máquina de estados à mão**: dividir a tarefa em fases nomeadas e decidir o que vai em cada checkpoint. Esquecer uma variável no checkpoint gera um erro que só aparece depois de uma retomada; salvar demais encarece o armazenamento e as migrações.
 
 | | **Código linear** (fácil de escrever) | **Máquina de estados à mão** |
 |---|---|---|
 | **Replay** | Temporal, Vercel Workflow, Cloudflare Workflows, Restate, Effect Workflow; Code Mode do pi-durable | — |
 | **Snapshot** | **Dormant: o compilador gera a máquina de estados** | tasks do pi-durable |
 
-Desde a versão 1.2.0, o pi-durable também oferece um *Code Mode* durável: scripts lineares numa VM QuickJS, retomados por **replay** com determinismo imposto pela própria VM (relógio virtual, *seed* fixa). A Earendil usa replay exatamente onde o estado fica preso numa VM opaca e não pode ser fotografado; um compilador que conhece o programa e calcula as variáveis vivas não tem essa limitação.
+Desde a versão 1.2.0, o pi-durable também oferece um *Code Mode* durável: scripts lineares numa VM QuickJS, retomados por **replay** com determinismo imposto pela própria VM (relógio virtual, *seed* fixa). Ou seja, no pi-durable o replay aparece justamente no componente cujo estado fica dentro de uma VM opaca, enquanto as tasks, de estado explícito, usam checkpoint. Um compilador que conhece o programa e calcula as variáveis vivas consegue produzir esse estado explícito também para código linear.
 
 O compilador de C# já faz uma transformação parecida com `async`/`await`: transforma o método numa máquina de estados e move para o objeto de estado apenas as variáveis locais que atravessam um `await`, decididas por análise de fluxo de dados. Mas essa máquina vive só em memória. O Dormant leva a mesma ideia para estados **persistidos**.
 
@@ -157,7 +156,7 @@ flowchart LR
     s3 --> fim(["retorna"])
 ```
 
-Um esboço do JavaScript gerado (o formato exato será definido na Entrega 4):
+Um esboço do JavaScript gerado (o formato exato será definido na Entrega 4; ver `roadmap.md`):
 
 ```js
 export const cobrar = workflow({
@@ -175,7 +174,17 @@ export const cobrar = workflow({
 
 As otimizações clássicas ganham um efeito visível: a eliminação de código morto e a propagação de constantes **reduzem o conjunto de variáveis vivas**, e portanto o estado persistido em cada pausa.
 
-## 6. A linguagem (definições da Entrega 1)
+## 6. A linguagem
+
+Todo compilador envolve três linguagens com papéis diferentes. No Dormant:
+
+| Papel | Linguagem |
+|---|---|
+| **Fonte** (o que o programador escreve) | Dormant: subconjunto de TypeScript com as diretivas `"use workflow"` / `"use step"` |
+| **Implementação** (em que o compilador é escrito) | TypeScript, executado no Bun |
+| **Alvo** (o que o compilador gera) | JavaScript: cada Workflow vira uma máquina de estados (fases + checkpoint com as variáveis vivas), executada no Bun por um runtime mínimo que agenda os `sleep`s e persiste o estado em SQLite |
+
+Entre a fonte e o alvo fica o TAC: o caminho de compilação é Dormant → AST → TAC → otimizações e liveness → JavaScript. O interpretador não gera código; executa a AST diretamente.
 
 | Questão | Definição |
 |---|---|
@@ -214,15 +223,15 @@ Além das regras usuais (tipos de operadores, chamadas, retornos), o verificador
 
 ```mermaid
 flowchart TB
-    subgraph FE["Front-end (Entregas 2 e 3)"]
+    subgraph FE["Front-end"]
         direction LR
         SRC["Programa .ts"] --> PAR["Parser<br/>(combinators)"] --> TC["Verificador<br/>de tipos"] --> INT["Interpretador<br/>(replay)"]
     end
-    subgraph OP["Otimização (Entrega 4)"]
+    subgraph OP["Otimização"]
         direction LR
         TAC["Geração<br/>de TAC"] --> CFG["Grafo de fluxo<br/>de controle"] --> OPT["Const. prop.,<br/>DCE, CSE"]
     end
-    subgraph DU["Durabilidade (Entrega 4)"]
+    subgraph DU["Durabilidade"]
         direction LR
         LIV["Liveness nos pontos<br/>de suspensão"] --> GEN["Máquina de estados<br/>(JavaScript)"] --> RT["Runtime no Bun<br/>(SQLite)"]
     end
@@ -233,24 +242,14 @@ flowchart TB
 - **Implementação:** TypeScript sobre o Bun, com uma biblioteca própria de parser combinators. Os motivos:
   - o runtime durável e o código gerado já são JavaScript/Bun, então compilador, runtime e testes compartilham uma única linguagem;
   - os testes diferenciais executam o mesmo programa no Bun sem nenhuma ponte entre linguagens;
-  - o esforço de aprendizado do semestre vai para compiladores e durabilidade, e não para uma nova linguagem de implementação, que eu ainda não domino.
+  - o esforço de aprendizado vai para compiladores e durabilidade, e não para uma nova linguagem de implementação.
 
-  Rust foi a principal alternativa considerada: é a linguagem do MiniC, a linguagem de referência da disciplina para a turma de Engenharia da Computação. Como eu não tinha experiência com Rust, aprendê-lo ao mesmo tempo que os conceitos de compiladores aumentaria bastante a complexidade do projeto.
+  Rust foi a principal alternativa considerada (é a linguagem do MiniC, a linguagem de referência da disciplina); sem experiência prévia com Rust, aprendê-lo junto com os conceitos de compiladores aumentaria bastante a complexidade do projeto.
 - **Alvo:** JavaScript, executado no Bun por um runtime mínimo que agenda os `sleep`s e persiste o estado.
 - **TAC (código de três endereços):** cada instrução tem no máximo uma operação, o que torna explícitos os valores intermediários.
 - **CFG (grafo de fluxo de controle):** organiza o TAC em blocos básicos ligados pelos saltos possíveis. É sobre ele que rodam as análises de fluxo de dados (liveness, propagação de constantes).
 
-## 8. Plano por entrega
-
-Cada entrega tem um **núcleo**, que cumpre sozinho o que o plano da disciplina pede, e uma **camada durável** por cima. Se a camada atrasar, o núcleo garante a entrega.
-
-| Entrega | Núcleo | Camada durável | Período |
-|---|---|---|---|
-| **1 + 2** | Definição da linguagem; gramática; parser com combinators; suíte de testes | Reconhecimento das diretivas `"use workflow"` / `"use step"` | a combinar |
-| **3** | Verificador de tipos; interpretador | Regras da Seção 6.2; interpretador com **replay** (log em arquivo), demonstrado matando o processo no meio e retomando | 19–23/10 |
-| **4** | Geração de TAC; CFG; propagação de constantes, eliminação de código morto, eliminação de subexpressões comuns | Liveness nos pontos de suspensão; geração da máquina de estados com **snapshot**; runtime mínimo | 23–27/11 |
-
-Ao final, o projeto terá implementado **as duas estratégias** (replay no interpretador, snapshot no compilador), o que permite compará-las com base em implementação própria.
+## 8. Escopo da primeira versão
 
 **Fora da primeira versão:**
 
@@ -274,16 +273,7 @@ Ao final, o projeto terá implementado **as duas estratégias** (replay no inter
 - **Testes diferenciais:** o mesmo programa executado (a) no Bun como TypeScript comum, (b) no interpretador do Dormant e (c) compilado; as saídas devem coincidir quando não há reinícios.
 - **Testes de retomada:** para cada ponto de suspensão de um programa, interromper a execução naquele ponto, retomar, e verificar que a saída final é a mesma de uma execução sem interrupções, tanto no replay quanto no snapshot.
 
-## 10. Riscos e mitigações
-
-| Risco | Mitigação |
-|---|---|
-| Prazo curto até a apresentação conjunta das Entregas 1 e 2 | Gramática pequena; combinators próprios (~150 linhas); a camada durável na Entrega 2 é só o reconhecimento de diretivas |
-| Transformação em máquina de estados mais difícil que o previsto | `await` só no nível de comando na v1; o núcleo da Entrega 4 (TAC + otimizações) independe dela |
-| Semântica numérica divergindo do JavaScript | Decisão explícita na Entrega 2 (Seção 6.1), coberta por testes diferenciais |
-| Alvo JavaScript considerado alto nível demais | A descida relevante acontece em TAC → máquina de estados; alvo validado com a disciplina antes da Entrega 4 |
-
-## 11. Referências
+## 10. Referências
 
 **Sistemas de workflows duráveis**
 

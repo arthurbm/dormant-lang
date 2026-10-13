@@ -2,15 +2,11 @@
 
 Vocabulário do Dormant: um subconjunto de TypeScript para workflows duráveis, desenvolvido como projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2).
 
-## Disciplina
+## Roadmap
 
 **Entrega**:
-Um dos quatro marcos do projeto na disciplina: proposta; gramática + parser; tipos + interpretador; IR + otimização + geração de código.
+Um dos quatro marcos do projeto, um por etapa do compilador: definição da linguagem; gramática + parser; tipos + interpretador; IR + otimização + geração de código.
 _Avoid_: marco, milestone, apresentação
-
-**Proposta**:
-A Entrega 1: definição de propósito, paradigma, sistema de tipos e inspiração sintática da linguagem.
-_Avoid_: pitch do produto, apresentação do tema
 
 ## Durabilidade
 
