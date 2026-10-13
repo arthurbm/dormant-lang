@@ -29,7 +29,7 @@ A proposta é que **o compilador transforme código escrito de forma linear em u
 
 Trabalho como engenheiro de IA sênior na Trilha, onde lido diariamente com **workflows duráveis**, tanto em pipelines de processamento de dados quanto em agentes de IA generativa. Um workflow durável é uma função cuja execução precisa sobreviver a falhas: um processo que reinicia, um deploy no meio da execução, uma espera de três dias por um evento externo. Exemplos:
 
-- um agente que chama dezenas de ferramentas ao longo de uma conversa longa;
+- um pipeline que dispara um agente de IA por documento, espera revisão humana dos casos duvidosos e consolida o resultado;
 - um pipeline que processa milhares de lotes;
 - uma cobrança que espera o pagamento por dias antes de mandar um lembrete.
 
@@ -120,8 +120,10 @@ O **pi-durable** (Earendil, lançado com o Pi 1.0 em outubro de 2026) mostra que
 
 | | **Código linear** (fácil de escrever) | **Máquina de estados à mão** |
 |---|---|---|
-| **Replay** | Temporal, Vercel Workflow, Cloudflare Workflows, Restate, Effect Workflow | — |
-| **Snapshot** | **Dormant: o compilador gera a máquina de estados** | pi-durable |
+| **Replay** | Temporal, Vercel Workflow, Cloudflare Workflows, Restate, Effect Workflow; Code Mode do pi-durable | — |
+| **Snapshot** | **Dormant: o compilador gera a máquina de estados** | tasks do pi-durable |
+
+Desde a versão 1.2.0, o pi-durable também oferece um *Code Mode* durável: scripts lineares numa VM QuickJS, retomados por **replay** com determinismo imposto pela própria VM (relógio virtual, *seed* fixa). A Earendil usa replay exatamente onde o estado fica preso numa VM opaca e não pode ser fotografado; um compilador que conhece o programa e calcula as variáveis vivas não tem essa limitação.
 
 O compilador de C# já faz uma transformação parecida com `async`/`await`: transforma o método numa máquina de estados e move para o objeto de estado apenas as variáveis locais que atravessam um `await`, decididas por análise de fluxo de dados. Mas essa máquina vive só em memória. O Dormant leva a mesma ideia para estados **persistidos**.
 
@@ -132,6 +134,8 @@ Uma biblioteca só consegue fazer snapshot se o programador escrever a máquina 
 3. **verifica estaticamente** que tudo o que é salvo é serializável e que efeitos colaterais só ocorrem em steps: regras que os sistemas de replay só conseguem impor em tempo de execução.
 
 Em uma frase: *a ergonomia do Vercel Workflow (código linear) com a semântica do pi-durable (snapshot), e o compilador fazendo a ponte.*
+
+**Fronteira com a durabilidade de agentes.** O Dormant não substitui a durabilidade do *loop* de um agente de IA (modelo → ferramenta → modelo). Ali o estado vivo já é dado serializado, a própria conversa, e ferramentas como o OpenCode 2 o tornam durável gravando o histórico num log de eventos e relendo-o ao retomar, sem análise de variáveis. O Dormant torna durável o **código que orquestra** agentes e etapas, cujo estado vive em variáveis locais (índices de laço, acumuladores, decisões de desvio, aprovações) e precisa ser descoberto pelo compilador.
 
 ## 5. Como o compilador faz isso
 
@@ -289,6 +293,7 @@ Ao final, o projeto terá implementado **as duas estratégias** (replay no inter
 - Restate — execução durável: <https://docs.restate.dev/concepts/durable_execution>
 - pi-durable (Earendil): <https://github.com/earendil-works/pi> e <https://earendil.com/posts/pi-durable/>
 - Effect — workflows e cluster: <https://effect.website>
+- OpenCode 2 (Anomaly) — durabilidade de sessões de agente por log de eventos: <https://anoma.ly/notes/opencode-2-0/>
 
 **Transformação de código em máquinas de estados**
 
