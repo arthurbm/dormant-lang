@@ -9,4 +9,4 @@ A v1 aceita: `let`/`const`, `int`, `float`, `boolean`, `string`, listas, funçõ
 ## Consequences
 
 - **Closures** são o corte menos óbvio: salvar uma closure viva exige salvar código (que muda entre versões) e variáveis capturadas (possivelmente compartilhadas entre closures — salvar separado cria cópias e muda o comportamento). O caminho de volta está mapeado: (1) permitir closures, mas proibir que uma closure esteja viva num ponto de suspensão — checado pela própria liveness, análogo a valores `Send` através de `.await` em Rust; (2) depois, defuncionalização (Reynolds) para torná-las serializáveis.
-- Cada Entrega tem um **núcleo** (cumpre o plano sozinho) e uma **camada durável** por cima; se a camada atrasar, o núcleo garante a entrega.
+- Cada Entrega tem um **compilador base** (cumpre o plano sozinho) e uma **camada durável** por cima; se a camada atrasar, o compilador base garante a Entrega.

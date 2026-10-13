@@ -190,7 +190,7 @@ Entre a fonte e o alvo fica o TAC: o caminho de compilação é Dormant → AST 
 
 | Questão | Definição |
 |---|---|
-| **Propósito** | Específico: orquestração durável, sobre um núcleo de propósito geral |
+| **Propósito** | Específico: orquestração durável, sobre uma base de propósito geral |
 | **Paradigma** | Imperativo |
 | **Sistema de tipos** | Estático; anotações obrigatórias em parâmetros e retornos de funções |
 | **Inspiração sintática** | TypeScript: todo programa Dormant é TypeScript válido |

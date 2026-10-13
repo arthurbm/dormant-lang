@@ -15,6 +15,6 @@ Um subconjunto sintático de TypeScript com semântica estendida para workflows 
 
 - `docs/adr/`: decisões aceitas (tese, sintaxe, implementação/alvo, cortes da v1). Leia antes de propor mudanças de arquitetura ou de escopo.
 - `docs/design.md`: linguagem, tese, arquitetura e escopo da v1. Leia antes de implementar qualquer parte da linguagem. É um documento **vivo**: atualize-o na mesma alteração que mudar a linguagem ou a arquitetura, explicando cada conceito no próprio texto (diagramas em Mermaid).
-- `docs/roadmap.md`: as quatro Entregas (núcleo + camada durável), status e riscos. Leia ao decidir o que fazer a seguir; atualize o status ao concluir uma etapa.
+- `docs/roadmap.md`: as quatro Entregas (compilador base + camada durável), status e riscos. Leia ao decidir o que fazer a seguir; atualize o status ao concluir uma etapa.
 - `docs/research/`: pesquisas com fontes primárias sobre sistemas relacionados e o registro da escolha da tese. Consulte antes de pesquisar um sistema, pois a pesquisa pode já existir; novas pesquisas entram aqui, no formato dos arquivos existentes.
 - `docs/references.md`: fontes e por que importam. Leia ao pesquisar e registre ali o que encontrar.

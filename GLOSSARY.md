@@ -30,10 +30,6 @@ _Avoid_: dump, imagem da memória
 
 ## Linguagem
 
-**Prelúdio**:
-O módulo TypeScript que declara o que o Dormant oferece além do subconjunto de TS (`int`, `float`, `sleep`, unidades de tempo), mantendo os programas válidos para o `tsc`.
-_Avoid_: stdlib
-
 **Runtime**:
 O programa que executa o JavaScript gerado pelo compilador: agenda os `sleep`s, chama os Steps e persiste os Checkpoints.
 _Avoid_: engine, motor
@@ -44,10 +40,10 @@ _Avoid_: engine, motor
 Uma das quatro etapas do projeto, uma por etapa do compilador: definição da linguagem; gramática + parser; tipos + interpretador; IR + otimização + geração de código.
 _Avoid_: marco, milestone
 
-**Núcleo**:
-A parte de cada Entrega que é uma etapa completa de compilador mesmo sem durabilidade.
-_Avoid_: base, MVP
+**Compilador base**:
+A parte de cada Entrega que é uma etapa completa de compilador mesmo sem durabilidade: parser, verificador de tipos, interpretador e TAC com otimizações para o subconjunto de TypeScript.
+_Avoid_: núcleo, MVP
 
 **Camada durável**:
-A parte de cada Entrega construída sobre o Núcleo para dar suporte a Workflows (diretivas, regras de tipos, Replay, Snapshot).
+A parte de cada Entrega construída sobre o Compilador base para dar suporte a Workflows (diretivas, regras de tipos, Replay, Snapshot).
 _Avoid_: extensão, diferencial

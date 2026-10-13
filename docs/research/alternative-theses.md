@@ -184,7 +184,7 @@ O [Bend 2](https://github.com/HigherOrderCO/Bend) é "a fast language that block
 1. **É a única candidata em que a análise de fluxo de dados da Entrega 4 é o produto.** Nas outras, liveness e as demais otimizações seriam um apêndice. No Dormant, liveness decide o que entra no snapshot, e cada otimização tem efeito mensurável no tamanho do estado salvo.
 2. **O trade-off é real e tem ancoragem dupla.** Vercel, Cloudflare e Restate documentam o replay e suas regras de determinismo. O Roslyn documenta o caminho compilado, com locais salvos por análise de fluxo de dados. O Dormant implementa os dois: replay no interpretador (Entrega 3) e snapshot no compilador (Entrega 4).
 3. **O ângulo é próprio.** Ao contrário do MiniTS, não existe um "scriptc" que já faça isso. A frase de posicionamento correta está no [ADR 0001](../adr/0001-compiled-snapshot-thesis.md): uma biblioteca só consegue snapshot se o programador escrever a máquina de estados à mão, e uma linguagem consegue a partir de código linear.
-4. **O núcleo garante as Entregas.** Se a camada durável atrasar, o subconjunto de TS com parser, checker, interpretador e TAC cumpre o plano sozinho ([ADR 0004](../adr/0004-v1-scope-cuts.md)).
+4. **O compilador base garante as Entregas.** Se a camada durável atrasar, o subconjunto de TS com parser, checker, interpretador e TAC cumpre o plano sozinho ([ADR 0004](../adr/0004-v1-scope-cuts.md)).
 
 ## 6. O que as outras teses podem dar ao Dormant (funcionalidades futuras)
 

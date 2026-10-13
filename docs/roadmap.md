@@ -1,8 +1,8 @@
 # Roadmap
 
-O Dormant é construído em quatro Entregas, uma por etapa do compilador. Cada Entrega tem um **núcleo**, que é uma etapa completa de compilador mesmo sem durabilidade, e uma **camada durável** por cima. Se a camada atrasar, o núcleo garante a Entrega. O design da linguagem está em [`design.md`](design.md).
+O Dormant é construído em quatro Entregas, uma por etapa do compilador. Cada Entrega tem um **compilador base**, que é uma etapa completa de compilador mesmo sem durabilidade, e uma **camada durável** por cima. Se a camada atrasar, o compilador base garante a Entrega. O design da linguagem está em [`design.md`](design.md).
 
-| Entrega | Núcleo | Camada durável | Status |
+| Entrega | Compilador base | Camada durável | Status |
 |---|---|---|---|
 | **1** | Definição da linguagem | Tese, posicionamento e regras específicas ([`design.md`](design.md)) | ✅ definida |
 | **2** | Gramática; parser com combinators próprios; suíte de testes | Reconhecimento das diretivas `"use workflow"` / `"use step"` | ⏳ próxima |
@@ -15,7 +15,7 @@ Ao final, o projeto terá implementado **as duas estratégias de retomada** (rep
 
 | Risco | Mitigação |
 |---|---|
-| Transformação em máquina de estados mais difícil que o previsto | `await` só no nível de comando na v1; o núcleo da Entrega 4 (TAC + otimizações) independe dela |
+| Transformação em máquina de estados mais difícil que o previsto | `await` só no nível de comando na v1; o compilador base da Entrega 4 (TAC + otimizações) independe dela |
 | Semântica numérica divergindo do JavaScript | Decisão explícita na Entrega 2, coberta por testes diferenciais |
 | Alvo JavaScript considerado alto nível demais | A descida relevante acontece em TAC → máquina de estados |
 
@@ -24,4 +24,4 @@ Ao final, o projeto terá implementado **as duas estratégias de retomada** (rep
 - Closures: primeiro proibindo apenas closures vivas num ponto de suspensão, depois defuncionalização ([ADR 0004](adr/0004-v1-scope-cuts.md)).
 - Versionamento assistido pelo compilador: avisar quando uma mudança no Workflow altera as variáveis vivas de um ponto de suspensão e exige uma migração.
 - Um texto explicando replay × snapshot a partir da implementação própria das duas estratégias.
-- Aplicar o núcleo (liveness + geração da máquina de estados) a TypeScript real, como plugin de um transpilador (como o plugin SWC do Vercel Workflow), gerando código para um runtime de snapshot. Para isso, o núcleo de análise e transformação fica separado da sintaxe desde o início.
+- Aplicar a parte de análise e transformação (liveness + geração da máquina de estados) a TypeScript real, como plugin de um transpilador (como o plugin SWC do Vercel Workflow), gerando código para um runtime de snapshot. Para isso, essa parte fica separada da sintaxe desde o início.
