@@ -16,6 +16,10 @@ Material levantado durante a definição do projeto (out/2026), com o porquê de
 | [Effect v4 — ClusterWorkflowEngine](https://effect.website/docs/v4/api/effect/unstable/cluster/ClusterWorkflowEngine) | Workflows duráveis no Effect, ainda em `effect/unstable/*` |
 | Burckhardt et al., *Durable Functions: Semantics for Stateful Serverless*, OOPSLA 2021 **(conferir)** | Formalização da semântica do modelo de replay (Azure Durable Functions) |
 
+## Panorama de ferramentas e compiladores
+
+Que etapas do compilador cada ferramenta do ecossistema JS/TS (`tsc`, TypeScript 7, Babel, SWC, esbuild, oxc, Bun, bundlers, Terser, React Compiler, scriptc, V8) e de outras linguagens (CPython, javac/JVM, LLVM, Go, rustc) implementa, e onde o Dormant se encaixa: [`research/compiler-landscape.md`](research/compiler-landscape.md). Precedentes mais próximos: o transform de geradores do `tsc` 5.x (máquina de estados que iça todas as locais) e o React Compiler (IR com CFG e fluxo de dados dentro de um plugin de Babel).
+
 ## Transformação de código em máquinas de estados (Entrega 4)
 
 | Referência | Por que importa |
