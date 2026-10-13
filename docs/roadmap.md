@@ -23,4 +23,5 @@ Ao final, o projeto terá implementado **as duas estratégias de retomada** (rep
 
 - Closures: primeiro proibindo apenas closures vivas num ponto de suspensão, depois defuncionalização ([ADR 0004](adr/0004-v1-scope-cuts.md)).
 - Versionamento assistido pelo compilador: avisar quando uma mudança no Workflow altera as variáveis vivas de um ponto de suspensão e exige uma migração.
-- Aplicar o núcleo (liveness + geração da máquina de estados) a TypeScript real, como plugin de um transpilador.
+- Um texto explicando replay × snapshot a partir da implementação própria das duas estratégias.
+- Aplicar o núcleo (liveness + geração da máquina de estados) a TypeScript real, como plugin de um transpilador (como o plugin SWC do Vercel Workflow), gerando código para um runtime de snapshot. Para isso, o núcleo de análise e transformação fica separado da sintaxe desde o início.
