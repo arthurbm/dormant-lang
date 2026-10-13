@@ -28,6 +28,18 @@ _Avoid_: fotografia
 O registro salvo por um Snapshot: o estado atual da máquina de estados e os valores das variáveis vivas naquele Ponto de suspensão.
 _Avoid_: dump, imagem da memória
 
+**Layout de Checkpoints**:
+A descrição dos Checkpoints que um Workflow pode gravar: para cada Ponto de suspensão, as variáveis vivas e seus tipos.
+_Avoid_: schema, formato do estado
+
+**Migração**:
+A conversão dos Checkpoints de execuções em andamento para o Layout de Checkpoints de uma nova versão do Workflow.
+_Avoid_: upgrade
+
+**Manifesto de Steps**:
+O conjunto de Steps que um Workflow pode chamar e, portanto, o conjunto de efeitos colaterais que ele pode causar.
+_Avoid_: permissões, capacidades, allowlist
+
 ## Linguagem
 
 **Runtime**:

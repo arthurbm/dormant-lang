@@ -24,6 +24,8 @@ A proposta é que **o compilador transforme código escrito de forma linear em u
 - otimizações;
 - geração de código, com retomada por *snapshot*.
 
+As mesmas análises permitem ao compilador duas coisas que os sistemas de *replay* não fazem: avisar, antes do deploy, quando uma mudança no código impede retomar execuções em andamento, e listar os Steps (os efeitos) que cada Workflow pode causar antes de executá-lo.
+
 ## 2. Motivação
 
 Trabalho como engenheiro de IA sênior na Trilha, onde lido diariamente com **workflows duráveis**, tanto em pipelines de processamento de dados quanto em agentes de IA generativa. Um workflow durável é uma função cuja execução precisa sobreviver a falhas: um processo que reinicia, um deploy no meio da execução, uma espera de três dias por um evento externo. Exemplos:
@@ -103,15 +105,36 @@ sequenceDiagram
 
 | | **Replay** | **Snapshot** |
 |---|---|---|
-| Determinismo do workflow | Obrigatório | **Não é exigido**: cada trecho executa uma única vez |
-| Custo de retomar | Cresce com o histórico (reler e reexecutar tudo) | Constante: carregar o estado atual |
-| Execuções muito longas | Exigem limites de histórico e mecanismos de "recomeço" (ex.: *Continue-As-New* no Temporal) | Sem histórico para crescer |
-| Mudar o código com execuções em andamento | O código novo precisa reproduzir o histórico antigo (*patching*/versionamento) | Migração explícita dos dados salvos |
+| Mudar o código com execuções em andamento | O código novo precisa reproduzir o histórico gravado pelo antigo: fixar cada execução na versão que a iniciou ou acumular *patches*; um erro só aparece na retomada | **O Checkpoint é dado**: o código novo só precisa saber continuar de cada estado com aquelas variáveis, e uma mudança incompatível é detectável em compilação (Seção 4.2) |
+| Determinismo do workflow | Obrigatório (o Vercel Workflow e o Code Mode do pi-durable o impõem com uma VM controlada) | **Não é exigido**: cada trecho executa uma única vez |
+| Workflows que nunca terminam (um laço com `sleep`) | O histórico cresce sem limite e exige um recomeço explícito (ex.: *Continue-As-New* no Temporal) | Cada volta sobrescreve o Checkpoint |
+| Resultados grandes de Steps | Ficam no log e são recarregados em toda retomada | Saem do estado assim que deixam de estar vivos |
+| Custo de retomar | Cresce com o histórico, mas costuma ser pequeno perto da espera pelos Steps | Constante: carregar o Checkpoint |
 | Liberdade do código | **Total**: qualquer construção da linguagem | **Restrita**: o que está vivo numa pausa precisa ser serializável |
 | Observabilidade | **Gratuita**: o histórico é uma trilha de auditoria | Exige registro à parte |
 | Onde está a complexidade | No runtime | No **compilador** |
 
-Nenhuma das duas estratégias é melhor em geral: são pontos diferentes de um espaço de projeto.
+Nenhuma das duas estratégias é melhor em geral: são pontos diferentes de um espaço de projeto. Para um Workflow curto, que termina antes do próximo deploy, a diferença prática é pequena, e o Replay é a escolha sensata: é maduro, dá auditoria de graça e não restringe o código. O custo de reexecutar o histórico, citado com frequência, raramente decide: reexecutar o código de orquestração é barato perto de esperar por chamadas de rede, modelos de IA e `sleep`s.
+
+### 3.4 Quando o Snapshot compensa: execuções que vivem mais que o código
+
+O caso forte a favor do Snapshot não é tamanho nem desempenho. É a **evolução do código**. Muitos Workflows duram mais que o intervalo entre dois deploys: um onboarding com lembretes em D+3 e D+7, uma aprovação humana, uma cobrança mensal, um pipeline de agentes de IA que espera revisão. Cada deploy encontra execuções paradas no meio, que serão retomadas por um código diferente do que as começou.
+
+No Replay, o código novo precisa reproduzir o histórico gravado pelo antigo, e as saídas conhecidas são caras:
+
+- **Fixar a execução na versão antiga.** No Vercel Workflow, "Workflow runs are pinned to the deployment that starts them". Para um Workflow de semanas, isso significa manter deployments antigos vivos por semanas. Fora da Vercel é pior: a documentação do World de Postgres admite que o roteamento entre versões incompatíveis "remain unimplemented" ([`vercel-workflow-worlds.md`](research/vercel-workflow-worlds.md), seção 4).
+- ***Patching*.** O Temporal oferece `patched()`/`getVersion`: o código ganha desvios do tipo "se esta execução começou na versão antiga, faça assim", que se acumulam e só podem sair quando a última execução antiga terminar.
+- **Erro tardio.** Um patch errado só aparece na retomada, como divergência do Replay (`ReplayDivergenceError` no Vercel Workflow).
+
+**Quebrar um Workflow longo em vários menores é a saída usual, e é um Snapshot escrito à mão.** O *Continue-As-New* do Temporal e o padrão "self-upgrading" do Vercel Workflow encerram a execução e começam outra, passando adiante um estado escolhido pelo programador. A própria documentação do Vercel diz que "the serialized `state` is the migration boundary between versions". Ou seja: quando o Replay dói, os sistemas de Replay recorrem a fronteiras de estado explícitas, feitas à mão. O Dormant gera essas fronteiras em todo Ponto de suspensão e verifica, em compilação, se uma nova versão ainda consegue retomar as execuções em andamento (Seção 4.2).
+
+Os outros casos da tabela são reais, porém secundários:
+
+- **Workflows que nunca terminam**, como uma assinatura que cobra todo mês para sempre. Não é que sejam grandes: eles não acabam, e no Replay o histórico cresce sem limite. Na v1 este caso fica de fora, porque exige `await` dentro de laços ([ADR 0004](adr/0004-v1-scope-cuts.md)).
+- **Resultados grandes de Steps.** Uma resposta de modelo de IA de centenas de kilobytes, da qual o Workflow extrai um campo, fica no log do Replay para sempre. No Snapshot, ela sai do Checkpoint assim que deixa de estar viva.
+- **Inspecionar e corrigir uma execução travada.** O Checkpoint é legível ("estado s2, `total` = 1500") e pode ser corrigido à mão. No Replay, o estado é implícito, e saber quanto vale `total` exige reexecutar.
+
+O Snapshot também não torna o versionamento trivial. Se uma mudança insere um Ponto de suspensão no meio do Workflow, decidir em que estado novo cada execução antiga continua exige uma decisão humana, uma **Migração**. O ganho é que o problema fica explícito e é detectado em compilação, em vez de estourar na retomada.
 
 ## 4. Panorama e posicionamento
 
@@ -128,15 +151,69 @@ O Vercel Workflow também tem, desde a versão 5.0, um caminho **híbrido experi
 
 O compilador de C# já faz uma transformação parecida com `async`/`await`: transforma o método numa máquina de estados e move para o objeto de estado apenas as variáveis locais que atravessam um `await`, decididas por análise de fluxo de dados. Mas essa máquina vive só em memória. O Dormant leva a mesma ideia para estados **persistidos**.
 
+### 4.1 O que só um compilador consegue
+
 Uma biblioteca só consegue fazer snapshot se o programador escrever a máquina de estados; **uma linguagem consegue fazê-lo a partir de código linear**, porque o compilador:
 
-1. **enxerga a função inteira** e pode dividi-la em estados em cada ponto de suspensão;
+1. **enxerga a função inteira** e pode dividi-la em estados em cada Ponto de suspensão;
 2. **calcula as variáveis vivas** (*liveness*) em cada ponto e salva exatamente o necessário;
-3. **verifica estaticamente** que tudo o que é salvo é serializável e que efeitos colaterais só ocorrem em steps: regras que os sistemas de replay só conseguem impor em tempo de execução.
+3. **verifica estaticamente** que tudo o que é salvo é serializável e que efeitos colaterais só ocorrem em Steps: regras que os sistemas de Replay só conseguem impor em tempo de execução;
+4. **compara versões do Workflow** e avisa, antes do deploy, quando uma mudança impede retomar as execuções em andamento (Seção 4.2);
+5. **lista os Steps que cada Workflow pode chamar**, que são também os efeitos que ele pode causar, antes de executá-lo (Seção 4.3).
 
-Em uma frase: *a ergonomia do Vercel Workflow (código linear) com a semântica do pi-durable (snapshot), e o compilador fazendo a ponte.*
+Os itens 4 e 5 reaproveitam análises que o compilador já faz por causa dos itens 1 a 3: a liveness e a regra de que efeitos só ocorrem em Steps.
 
-**Fronteira com a durabilidade de agentes.** O Dormant não substitui a durabilidade do *loop* de um agente de IA (modelo → ferramenta → modelo). Ali o estado vivo já é dado serializado, a própria conversa, e ferramentas como o OpenCode 2 o tornam durável gravando o histórico num log de eventos e relendo-o ao retomar, sem análise de variáveis. O Dormant torna durável o **código que orquestra** agentes e etapas, cujo estado vive em variáveis locais (índices de laço, acumuladores, decisões de desvio, aprovações) e precisa ser descoberto pelo compilador.
+### 4.2 Compatibilidade entre versões
+
+O **Layout de Checkpoints** de um Workflow descreve, para cada Ponto de suspensão, quais variáveis estão vivas e com que tipos. É exatamente o que um Checkpoint daquele ponto contém. Uma execução parada num Ponto de suspensão pode ser retomada por uma nova versão do Workflow se, naquele ponto, as duas versões têm o mesmo layout. O que vem depois do ponto pode mudar livremente: o código novo só recebe as variáveis salvas.
+
+O exemplo da Seção 2 mostra o erro que esse diagnóstico pega. Suponha que uma nova versão de `cobrar` passe a calcular o total só depois da espera:
+
+```ts
+  const valor = await buscarValor(pedido);
+  await sleep(3 * DIA);
+  const ok = await enviarCobranca(pedido, valor + 500);   // novo: total calculado depois do sleep
+```
+
+Agora `valor` está viva no `sleep`, mas os Checkpoints gravados pela versão antiga nesse ponto contêm só `pedido` e `total`. Uma execução que estava dormindo retomaria sem `valor`. No pi-durable, que pede o checkpoint escrito à mão, esse é justamente o erro que só aparece depois de uma retomada. No Dormant, o compilador o aponta na hora:
+
+- junto com o JavaScript, o compilador emite o Layout de Checkpoints de cada Workflow, que fica versionado no repositório com o código;
+- ao recompilar, compara o layout novo com o anterior e diz quais Pontos de suspensão ficaram incompatíveis, e por quê (uma variável viva entrou ou saiu, um tipo mudou, um Ponto de suspensão foi inserido ou removido);
+- o Runtime grava no Checkpoint uma identificação do layout e, se ela não bater com a do código atual, recusa a retomada com um diagnóstico em vez de seguir com estado errado, como o Code Mode do pi-durable recusa um Replay quando a versão muda.
+
+Na v1, a comparação é simples porque `await` só aparece no nível de comando do Workflow: os Pontos de suspensão formam uma sequência, e cada um é identificado pela posição e pelo que espera (qual Step, ou `sleep`). A v1 só **detecta** a incompatibilidade. Escrever a **Migração** que converte os Checkpoints antigos fica para depois ([ADR 0004](adr/0004-v1-scope-cuts.md)).
+
+### 4.3 Manifesto de Steps
+
+Como efeitos colaterais só ocorrem em Steps (regra 1 da Seção 6.2), o conjunto de Steps que um Workflow pode chamar é também o conjunto de efeitos que ele pode causar. O compilador emite esse conjunto, o **Manifesto de Steps**, junto com o código gerado.
+
+O manifesto é calculado em duas etapas, uma em cada Entrega:
+
+- **Verificador de tipos (Entrega 3):** uma versão conservadora, com todos os Steps chamados no corpo do Workflow.
+- **Compilador (Entrega 4):** depois da propagação de constantes e da eliminação de código morto sobre o TAC, o manifesto é recalculado, e as chamadas que se provaram inalcançáveis saem dele.
+
+```ts
+export async function cobrar(pedido: int): Promise<string> {
+  "use workflow";
+  const SIMULAR = true;
+  const valor = await buscarValor(pedido);
+  if (SIMULAR) { return "simulado"; }
+  const ok = await enviarCobranca(pedido, valor);   // inalcançável
+  ...
+}
+```
+
+O verificador lista `buscarValor` e `enviarCobranca`. Depois da propagação de constantes, o compilador sabe que o `if` sempre retorna, o DCE remove o resto, e o manifesto final fica só com `buscarValor`.
+
+O uso pretendido é a **aprovação antes de executar**. A tendência de 2025 e 2026 é que agentes de IA escrevam código para chamar ferramentas, em vez de chamá-las uma a uma (Code Mode da Cloudflare; "code execution with MCP" da Anthropic). Quando o código de orquestração é escrito por um modelo, uma pessoa ou um sistema hospedeiro pode revisar o manifesto e aprovar o Workflow uma vez, antes de rodar. Hoje, o Code Mode da Cloudflare pausa a execução a cada ferramenta marcada com `requiresApproval` e a retoma "through replay" ([`alternative-theses.md`](research/alternative-theses.md), tese F).
+
+O manifesto é uma aproximação conservadora: um Step que está nele pode nunca ser chamado, mas um Step que não está nele nunca é. Na v1 ele lista só *quais* Steps; não diz nada sobre os argumentos.
+
+### 4.4 Resumo
+
+Em uma frase: *a ergonomia do Vercel Workflow (código linear) com a semântica do pi-durable (snapshot), e o compilador fazendo a ponte, inclusive entre versões do código.*
+
+**Fronteira com a durabilidade de agentes.** O Dormant não substitui a durabilidade do *loop* de um agente de IA (modelo → ferramenta → modelo). Ali o estado vivo já é dado serializado, a própria conversa, e ferramentas como o OpenCode 2 o tornam durável gravando o histórico num log de eventos e relendo-o ao retomar, sem análise de variáveis. O Dormant torna durável o **código que orquestra** agentes e etapas, cujo estado vive em variáveis locais (índices de laço, acumuladores, decisões de desvio, aprovações) e precisa ser descoberto pelo compilador. Quando esse código é escrito por um modelo, o Manifesto de Steps diz o que ele pode fazer antes de ele rodar.
 
 ## 5. Como o compilador faz isso
 
@@ -174,7 +251,7 @@ export const cobrar = workflow({
 });
 ```
 
-As otimizações clássicas ganham um efeito visível: a eliminação de código morto e a propagação de constantes **reduzem o conjunto de variáveis vivas**, e portanto o estado persistido em cada pausa.
+As otimizações clássicas ganham dois efeitos visíveis: a eliminação de código morto e a propagação de constantes **reduzem o conjunto de variáveis vivas**, e portanto o estado persistido em cada pausa, e **encolhem o Manifesto de Steps** (Seção 4.3).
 
 ## 6. A linguagem
 
@@ -221,6 +298,8 @@ Além das regras usuais (tipos de operadores, chamadas, retornos), o verificador
 2. **`await` apenas de steps e de `sleep`**, e apenas no nível de comando do workflow.
 3. **Tudo o que estiver vivo num ponto de suspensão deve ser serializável.** Na v1 todos os tipos são; a regra passa a ter efeito quando a linguagem crescer (Seção 8).
 
+Como consequência da regra 1, o verificador também calcula a versão conservadora do Manifesto de Steps de cada Workflow (Seção 4.3).
+
 ## 7. Arquitetura
 
 ```mermaid
@@ -236,6 +315,8 @@ flowchart TB
     subgraph DU["Durabilidade"]
         direction LR
         LIV["Liveness nos pontos<br/>de suspensão"] --> GEN["Máquina de estados<br/>(JavaScript)"] --> RT["Runtime no Bun<br/>(SQLite)"]
+        LIV --> CMP["Layout de Checkpoints<br/>e compatibilidade"]
+        MAN["Manifesto<br/>de Steps"]
     end
     FE -->|"AST tipada"| OP
     OP -->|"TAC otimizado"| DU
@@ -250,6 +331,7 @@ flowchart TB
 - **Alvo:** JavaScript, executado no Bun por um runtime mínimo que agenda os `sleep`s e persiste o estado.
 - **TAC (código de três endereços):** cada instrução tem no máximo uma operação, o que torna explícitos os valores intermediários.
 - **CFG (grafo de fluxo de controle):** organiza o TAC em blocos básicos ligados pelos saltos possíveis. É sobre ele que rodam as análises de fluxo de dados (liveness, propagação de constantes).
+- **Saídas além do JavaScript:** para cada Workflow, o compilador emite o Layout de Checkpoints, que serve ao diagnóstico de compatibilidade entre versões, e o Manifesto de Steps (Seções 4.2 e 4.3).
 
 ## 8. Escopo da primeira versão
 
@@ -262,7 +344,7 @@ flowchart TB
 - closures;
 - generics e union types;
 - módulos;
-- versionamento de workflows em andamento.
+- Migração de execuções em andamento para uma nova versão do Workflow (a v1 só detecta a incompatibilidade; Seção 4.2).
 
 **Closures** são o corte menos óbvio. Para salvar uma closure viva numa pausa seria preciso salvar o seu código, que pode mudar entre versões, e as variáveis que ela captura, que podem ser compartilhadas com outras closures (salvá-las separadamente criaria cópias e mudaria o comportamento). O caminho de evolução já está mapeado:
 
@@ -274,6 +356,8 @@ flowchart TB
 - **Testes do parser e do verificador de tipos:** programas válidos e inválidos, com as mensagens de erro esperadas.
 - **Testes diferenciais:** o mesmo programa executado (a) no Bun como TypeScript comum, (b) no interpretador do Dormant e (c) compilado; as saídas devem coincidir quando não há reinícios.
 - **Testes de retomada:** para cada ponto de suspensão de um programa, interromper a execução naquele ponto, retomar, e verificar que a saída final é a mesma de uma execução sem interrupções, tanto no replay quanto no snapshot.
+- **Testes de compatibilidade:** pares de versões de um mesmo Workflow, com os Pontos de suspensão que o diagnóstico deve apontar como incompatíveis (ou nenhum).
+- **Testes do Manifesto de Steps:** Steps em código que a propagação de constantes e o DCE provam inalcançável saem do manifesto final; os demais permanecem.
 
 ## 10. Referências
 

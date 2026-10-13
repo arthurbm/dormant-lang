@@ -18,9 +18,9 @@ Todo programa Dormant é TypeScript válido. O que muda é a semântica: compila
 
 ## Replay × snapshot
 
-Sistemas como Temporal, Vercel Workflow e Cloudflare Workflows retomam por **replay**: reexecutam a função desde o início, consultando um log de resultados, o que exige código determinístico e fica caro em históricos longos. A alternativa é o **snapshot**: salvar o ponto de parada e o estado necessário, e continuar dali. Bibliotecas que fazem snapshot, como o pi-durable, pedem que o programador escreva a máquina de estados à mão.
+Sistemas como Temporal, Vercel Workflow e Cloudflare Workflows retomam por **replay**: reexecutam a função desde o início, consultando um log de resultados, o que exige código determinístico e torna delicado mudar o código enquanto há execuções em andamento: a versão nova precisa reproduzir o histórico gravado pela antiga. A alternativa é o **snapshot**: salvar o ponto de parada e o estado necessário, e continuar dali. Bibliotecas que fazem snapshot, como o pi-durable, pedem que o programador escreva a máquina de estados à mão.
 
-O Dormant gera essa máquina de estados a partir de código linear, usando **análise de variáveis vivas** (*liveness*) sobre uma representação intermediária de três endereços (TAC). O interpretador implementa a outra estratégia, replay, para comparar as duas com implementação própria.
+O Dormant gera essa máquina de estados a partir de código linear, usando **análise de variáveis vivas** (*liveness*) sobre uma representação intermediária de três endereços (TAC). Como o estado salvo é dado, o compilador também compara versões de um Workflow e avisa, antes do deploy, quando uma mudança impede retomar as execuções em andamento. E, como só Steps causam efeitos, ele lista os Steps que cada Workflow pode chamar. O interpretador implementa a outra estratégia, replay, para comparar as duas com implementação própria.
 
 |  | Código linear | Máquina de estados à mão |
 |---|---|---|
