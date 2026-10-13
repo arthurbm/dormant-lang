@@ -332,6 +332,8 @@ flowchart TB
 - **TAC (código de três endereços):** cada instrução tem no máximo uma operação, o que torna explícitos os valores intermediários.
 - **CFG (grafo de fluxo de controle):** organiza o TAC em blocos básicos ligados pelos saltos possíveis. É sobre ele que rodam as análises de fluxo de dados (liveness, propagação de constantes).
 - **Saídas além do JavaScript:** para cada Workflow, o compilador emite o Layout de Checkpoints, que serve ao diagnóstico de compatibilidade entre versões, e o Manifesto de Steps (Seções 4.2 e 4.3).
+- **Distribuição como plugin do Bun (opcional):** um plugin no estilo do esbuild, com o hook `onLoad`, intercepta os arquivos `.ts` que contêm `"use workflow"`, roda o compilador inteiro do Dormant sobre o texto e devolve o JavaScript gerado. Assim, uma aplicação Bun comum importa um Workflow (`import { cobrar } from "./cobrar.ts"`) e o recebe já compilado, sem passo de build separado, como no Vercel Workflow. Todas as etapas continuam sendo do Dormant: o plugin só entrega o texto e recebe o resultado. Só o Bun entra no semestre porque é onde o Runtime executa; adaptadores para outras ferramentas ficam para depois (`roadmap.md`).
+- **Fronteira entre a AST e o TAC:** a geração de TAC recebe a AST tipada do Dormant por uma interface estreita, sem depender do parser. É essa separação que permite, depois do semestre, alimentar a mesma análise com a AST de um transpilador (ver ADR 0003).
 
 ## 8. Escopo da primeira versão
 
