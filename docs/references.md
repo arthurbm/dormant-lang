@@ -25,7 +25,8 @@ Que etapas do compilador cada ferramenta do ecossistema JS/TS (`tsc`, TypeScript
 | Referência | Por que importa |
 |---|---|
 | [Roslyn — CodeGen differences](https://github.com/dotnet/roslyn/blob/features/localsinit/docs/compilers/CSharp/CodeGen%20Differences.md) | Em Release, só locais que atravessam `await` são movidos para a máquina de estados, via análise de fluxo de dados. É a liveness do Dormant, em memória |
-| [regenerator](https://github.com/facebook/regenerator) e o `__generator` do `tsc` (alvo ES5) | Lowering de generators/`async` em JS para `switch` sobre contador de estado |
+| [regenerator](https://github.com/facebook/regenerator) e o `__generator` do `tsc` (alvo ES5) | Lowering de generators/`async` em JS para `switch` sobre contador de estado. É o padrão da saída do Dormant: o JS gerado a partir do TAC é um laço com `switch` sobre uma variável de estado, e a mesma variável vai para o Checkpoint ([ADR 0005](adr/0005-rust-compiler-js-target.md); `design.md`, Seção 5.1) |
+| A. Zakai, [*Emscripten: An LLVM-to-JavaScript Compiler*](https://github.com/emscripten-core/emscripten/blob/main/docs/paper.pdf) | Apresenta o **Relooper**, que "recreates high-level loop structures from low-level branching data" para gerar JS a partir da LLVM IR, e mostra a emulação ingênua que ele evita (`while(1) switch(__label__)`). O Dormant fica com o `switch`, porque a variável de estado também serve à retomada; o Relooper é a alternativa descartada para gerar JS legível |
 | Kotlin coroutines | Campo `label` + variáveis "derramadas" no objeto de continuação |
 | Rust `async` | Cada `Future` é um enum de estados; o tamanho depende das variáveis vivas através de cada `.await`. Analogia para a regra "closure não pode estar viva numa pausa" (`Send` através de `.await`) |
 | Racket web server — continuações serializáveis; J. McCarthy, ICFP 2009 **(conferir título exato)** | Precedente acadêmico de "compilador torna a execução salvável" |
@@ -48,7 +49,8 @@ O registro completo da escolha da tese (critérios, candidatas, notas e por que 
 
 | Referência | Por que importa |
 |---|---|
-| [MiniC](https://github.com/rbonifacio/MiniC) | Linguagem explorada nas aulas da turma de EC. Rust + `nom`; parser, type checker, interpretador e gerador de TAC (`src/ir/tac.rs`); sem otimizações nem back-end. `docs/` é um bom modelo de documentação |
+| [MiniC](https://github.com/rbonifacio/MiniC) | Linguagem explorada nas aulas da turma de EC. Rust + `nom` 7; parser, type checker, interpretador e gerador de TAC (`src/ir/tac.rs`); sem otimizações nem back-end ainda (o diagrama de `docs/tac_rules.tex` prevê TAC → RISC-V ou LLVM IR). Referência de técnica para cada Entrega do Dormant, não base de código ([ADR 0005](adr/0005-rust-compiler-js-target.md)). `docs/` é um bom modelo de documentação |
+| [nom](https://github.com/rust-bakery/nom) | "Rust parser combinator framework" (versão atual: 8). Biblioteca do parser da Entrega 2, a mesma do MiniC |
 | [SmartTS](https://github.com/rbonifacio/SmartTS) | Linguagem das aulas da turma de CC. Haskell + Megaparsec; gera LLTZ (Tezos). `docs/09-projects.md` lista as features do projeto padrão |
 | [miniLisp](https://github.com/rbonifacio/miniLisp) | Scala; mostra os dois estilos de parser (ANTLR e combinators) |
 | [ScalaWhileLang](https://github.com/rbonifacio/ScalaWhileLang) e TIP | Análises de fluxo de dados (reaching definitions, very busy expressions): referência para a Entrega 4 |
