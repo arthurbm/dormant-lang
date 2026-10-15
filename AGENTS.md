@@ -1,6 +1,6 @@
 # Dormant
 
-Um subconjunto sintático de TypeScript com semântica estendida para workflows duráveis. O compilador transforma código linear numa máquina de estados retomável por snapshot, salvando só as variáveis vivas. Escrito em TypeScript sobre o Bun e gera JavaScript. É um projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2).
+Um subconjunto sintático de TypeScript com semântica estendida para workflows duráveis. O compilador transforma código linear numa máquina de estados retomável por snapshot, salvando só as variáveis vivas. Escrito em Rust; gera JavaScript, executado por um Runtime próprio em JavaScript. É um projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2).
 
 **Contexto privado:** se `workspace/AGENTS.md` existir, leia-o antes de começar. Ali estão o perfil do autor, os prazos e o material da disciplina, que ficam fora deste repositório.
 
@@ -10,6 +10,7 @@ Um subconjunto sintático de TypeScript com semântica estendida para workflows 
 - Escreva em português do Brasil, com acentuação completa. Identificadores e termos técnicos ficam no original. Nomes de arquivos e pastas ficam em inglês.
 - Use os termos do `GLOSSARY.md` e troque qualquer sinônimo listado em _Avoid_ pelo termo canônico.
 - Mudança que contradiz um ADR atualiza ou substitui o ADR na mesma alteração.
+- Projetos e componentes novos nascem dos comandos oficiais (`cargo new`/`cargo init` no compilador, `bun init` no que for JavaScript), e dependências entram por `cargo add` ou `bun add`: o `Cargo.toml` e o `package.json` só mudam por comandos. Se um comando oficial exigir respostas interativas, peça ao autor que o rode no terminal dele.
 
 ## Mapa
 
