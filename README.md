@@ -39,6 +39,8 @@ Pipeline: parser ([`nom`](https://github.com/rust-bakery/nom), parser combinator
 
 Interface prevista: uma CLI, com `dormant build arquivo.ts` (compila) e `dormant parse arquivo.ts` (imprime a AST).
 
+O diagrama do pipeline, com a Entrega de cada etapa, está em [`docs/diagrams/pipeline.excalidraw`](docs/diagrams/pipeline.excalidraw) (abra no [Excalidraw](https://excalidraw.com) ou na extensão do VS Code).
+
 ## Status
 
 Em desenvolvimento como projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2). O design está definido; a implementação começa pelo parser. Veja o [roadmap](docs/roadmap.md).
