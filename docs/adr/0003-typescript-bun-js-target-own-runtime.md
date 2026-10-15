@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by ADR-0005
 ---
 
 # Implementação em TypeScript + Bun, alvo JavaScript, runtime próprio

@@ -17,7 +17,7 @@ O **Dormant** é um subconjunto sintático de TypeScript com semântica estendid
 
 A proposta é que **o compilador transforme código escrito de forma linear em uma máquina de estados retomável**, usando análise de variáveis vivas sobre código de três endereços (TAC) para persistir apenas o estado necessário em cada pausa. O projeto percorre todas as etapas de um compilador:
 
-- parser (com parser combinators);
+- parser (com parser combinators, na biblioteca `nom`);
 - verificação de tipos;
 - interpretação, com retomada por *replay*;
 - representação intermediária;
@@ -235,7 +235,7 @@ flowchart LR
     s3 --> fim(["retorna"])
 ```
 
-Um esboço do JavaScript gerado (o formato exato será definido na Entrega 4; ver `roadmap.md`):
+Um esboço **ilustrativo** dessa máquina, com uma fase por estado (no estilo das *tasks* do pi-durable). Não é o formato do código gerado, que é definido na Entrega 4 (Seção 5.1 e `roadmap.md`):
 
 ```js
 export const cobrar = workflow({
@@ -253,6 +253,47 @@ export const cobrar = workflow({
 
 As otimizações clássicas ganham dois efeitos visíveis: a eliminação de código morto e a propagação de constantes **reduzem o conjunto de variáveis vivas**, e portanto o estado persistido em cada pausa, e **encolhem o Manifesto de Steps** (Seção 4.3).
 
+### 5.1 O JavaScript é gerado a partir do TAC
+
+A direção para a Entrega 4 é gerar o JavaScript **a partir do TAC otimizado, não da AST**. É o que faz um compilador de C, que gera assembly a partir da sua representação intermediária, e o que o MiniC prevê (TAC → RISC-V ou LLVM IR). O `tsc` e o Babel fazem o contrário: geram JavaScript legível direto da AST.
+
+| Compilador | Gera o alvo a partir de | Alvo |
+|---|---|---|
+| Compilador de C; MiniC (previsto) | IR (no MiniC, o TAC) | assembly, RISC-V, LLVM IR |
+| `tsc`, Babel | AST | JavaScript legível |
+| **Dormant** | **TAC otimizado** | JavaScript em forma de máquina de estados |
+
+Assim, o código executado é exatamente o que as otimizações e a liveness analisaram. O obstáculo é que o TAC tem **saltos**: instruções como `ifFalse ok goto L1` ("se `ok` for falso, continue no rótulo `L1`"), e o JavaScript não tem `goto`. A saída é um laço com `switch` sobre uma variável de estado, o padrão do regenerator e do transform de geradores do `tsc`: cada rótulo do TAC vira um `case`, e cada salto vira `estado = N` seguido de `continue`. O final de `cobrar`:
+
+```ts
+if (ok) { return "cobrado"; }
+return "falhou";
+```
+
+vira o TAC
+
+```text
+    ifFalse ok goto L1
+    return "cobrado"
+L1: return "falhou"
+```
+
+e o JavaScript
+
+```js
+while (true) {
+  switch (estado) {
+    case 0:
+      if (!ok) { estado = 1; continue; }
+      return "cobrado";
+    case 1:
+      return "falhou";
+  }
+}
+```
+
+A mesma variável `estado` é o que vai para o Checkpoint num Ponto de suspensão, junto com as variáveis vivas. Retomar é entrar no laço com `estado` e as variáveis lidos do Checkpoint: **um único mecanismo resolve os saltos e a retomada**. A alternativa, reconstruir `if` e `while` a partir dos saltos para gerar JavaScript legível, exige um algoritmo próprio, como o Relooper do Emscripten (um compilador de LLVM IR para JavaScript).
+
 ## 6. A linguagem
 
 Todo compilador envolve três linguagens com papéis diferentes. No Dormant:
@@ -260,8 +301,8 @@ Todo compilador envolve três linguagens com papéis diferentes. No Dormant:
 | Papel | Linguagem |
 |---|---|
 | **Fonte** (o que o programador escreve) | Dormant: subconjunto de TypeScript com as diretivas `"use workflow"` / `"use step"` |
-| **Implementação** (em que o compilador é escrito) | TypeScript, executado no Bun |
-| **Alvo** (o que o compilador gera) | JavaScript: cada Workflow vira uma máquina de estados (fases + checkpoint com as variáveis vivas), executada no Bun por um runtime mínimo que agenda os `sleep`s e persiste o estado em SQLite |
+| **Implementação** (em que o compilador é escrito) | Rust |
+| **Alvo** (o que o compilador gera) | JavaScript: cada Workflow vira uma máquina de estados (um `switch` sobre o estado + Checkpoint com as variáveis vivas), executada por um Runtime mínimo em JavaScript que agenda os `sleep`s e persiste os Checkpoints, independente do motor JavaScript (Node, Deno, Bun) |
 
 Entre a fonte e o alvo fica o TAC: o caminho de compilação é Dormant → AST → TAC → otimizações e liveness → JavaScript. O interpretador não gera código; executa a AST diretamente.
 
@@ -286,7 +327,7 @@ A compatibilidade é buscada em três níveis:
 |---|---|---|
 | **Sintático** | O parser do TypeScript aceita o arquivo | Diretivas são strings; o resto é TypeScript comum |
 | **De tipos** | O `tsc` aceita o arquivo sem erros | Prelúdio com `type int = number`, `type float = number`, `sleep` etc. |
-| **Semântico** | Sem reinícios, executar no Bun dá o mesmo resultado | Base dos **testes diferenciais** (Seção 9) |
+| **Semântico** | Sem reinícios, executar como TypeScript comum num motor JavaScript dá o mesmo resultado | Base dos **testes diferenciais** (Seção 9) |
 
 Uma decisão em aberto decorre do terceiro nível: a semântica de `int` não pode divergir do `number` do JavaScript (por exemplo, em `7 / 2`). A proposta inicial é que `/` sempre produza `float`, com divisão inteira por uma função do prelúdio (`idiv`).
 
@@ -306,7 +347,7 @@ Como consequência da regra 1, o verificador também calcula a versão conservad
 flowchart TB
     subgraph FE["Front-end"]
         direction LR
-        SRC["Programa .ts"] --> PAR["Parser<br/>(combinators)"] --> TC["Verificador<br/>de tipos"] --> INT["Interpretador<br/>(replay)"]
+        SRC["Programa .ts"] --> PAR["Parser<br/>(nom)"] --> TC["Verificador<br/>de tipos"] --> INT["Interpretador<br/>(replay)"]
     end
     subgraph OP["Otimização"]
         direction LR
@@ -314,7 +355,7 @@ flowchart TB
     end
     subgraph DU["Durabilidade"]
         direction LR
-        LIV["Liveness nos pontos<br/>de suspensão"] --> GEN["Máquina de estados<br/>(JavaScript)"] --> RT["Runtime no Bun<br/>(SQLite)"]
+        LIV["Liveness nos pontos<br/>de suspensão"] --> GEN["Máquina de estados<br/>(JavaScript)"] --> RT["Runtime mínimo<br/>(Node, Deno ou Bun)"]
         LIV --> CMP["Layout de Checkpoints<br/>e compatibilidade"]
         MAN["Manifesto<br/>de Steps"]
     end
@@ -322,18 +363,19 @@ flowchart TB
     OP -->|"TAC otimizado"| DU
 ```
 
-- **Implementação:** TypeScript sobre o Bun, com uma biblioteca própria de parser combinators. Os motivos:
-  - o runtime durável e o código gerado já são JavaScript/Bun, então compilador, runtime e testes compartilham uma única linguagem;
-  - os testes diferenciais executam o mesmo programa no Bun sem nenhuma ponte entre linguagens;
-  - o esforço de aprendizado vai para compiladores e durabilidade, e não para uma nova linguagem de implementação.
+- **Implementação:** Rust (ADR 0005). Os motivos:
+  - o MiniC, a linguagem de referência da disciplina, é escrito em Rust e tem parser, verificador de tipos, interpretador e TAC: serve de referência de técnica em cada Entrega. Não é base de código: a linguagem, a gramática e a camada durável do Dormant são outras, e o MiniC tem sintaxe de C e ponteiros;
+  - o caminho pós-semestre fica direto: SWC e oxc, os transpiladores em que um plugin do Dormant entraria, são Rust, e o crate de análise e geração de código é o que esse plugin precisa;
+  - `enum` + `match` exaustivo: esquecer um tipo de nó da AST ou de instrução do TAC é erro de compilação do próprio compilador.
 
-  Rust foi a principal alternativa considerada (é a linguagem do MiniC, a linguagem de referência da disciplina); sem experiência prévia com Rust, aprendê-lo junto com os conceitos de compiladores aumentaria bastante a complexidade do projeto.
-- **Alvo:** JavaScript, executado no Bun por um runtime mínimo que agenda os `sleep`s e persiste o estado.
+  O custo é aprender Rust junto com os conceitos de compiladores, e ter duas linguagens no projeto: o compilador em Rust; o Runtime e o harness dos testes em JavaScript.
+- **Parser:** um **parser combinator** é uma função pequena que reconhece um pedaço da entrada (um número, uma palavra-chave) e se combina com outras em parsers maiores (sequência, alternativa, repetição), de modo que o parser tem a forma da gramática. O Dormant usa a biblioteca de combinators `nom`, a mesma do MiniC. Escrever combinators genéricos próprios em Rust exige funções que recebem e devolvem closures, com lifetimes nos tipos, a parte mais dura da linguagem para quem está começando.
+- **Interface:** no semestre, só uma CLI: `dormant build arquivo.ts` compila, e `dormant parse arquivo.ts`, da Entrega 2, imprime a AST.
+- **Alvo:** JavaScript gerado a partir do TAC otimizado (Seção 5.1), executado por um Runtime mínimo em JavaScript que agenda os `sleep`s, chama os Steps e persiste os Checkpoints. O Runtime acessa o armazenamento por uma interface pequena, então roda em qualquer motor JavaScript (Node, Deno, Bun). De reserva fica um segundo back-end sobre o mesmo TAC: bytecode próprio executado por uma VM em Rust (ADR 0005).
 - **TAC (código de três endereços):** cada instrução tem no máximo uma operação, o que torna explícitos os valores intermediários.
 - **CFG (grafo de fluxo de controle):** organiza o TAC em blocos básicos ligados pelos saltos possíveis. É sobre ele que rodam as análises de fluxo de dados (liveness, propagação de constantes).
 - **Saídas além do JavaScript:** para cada Workflow, o compilador emite o Layout de Checkpoints, que serve ao diagnóstico de compatibilidade entre versões, e o Manifesto de Steps (Seções 4.2 e 4.3).
-- **Distribuição como plugin do Bun (opcional):** um plugin no estilo do esbuild, com o hook `onLoad`, intercepta os arquivos `.ts` que contêm `"use workflow"`, roda o compilador inteiro do Dormant sobre o texto e devolve o JavaScript gerado. Assim, uma aplicação Bun comum importa um Workflow (`import { cobrar } from "./cobrar.ts"`) e o recebe já compilado, sem passo de build separado, como no Vercel Workflow. Todas as etapas continuam sendo do Dormant: o plugin só entrega o texto e recebe o resultado. Só o Bun entra no semestre porque é onde o Runtime executa; adaptadores para outras ferramentas ficam para depois (`roadmap.md`).
-- **Fronteira entre a AST e o TAC:** a geração de TAC recebe a AST tipada do Dormant por uma interface estreita, sem depender do parser. É essa separação que permite, depois do semestre, alimentar a mesma análise com a AST de um transpilador (ver ADR 0003).
+- **Fronteira entre a AST e o TAC:** a geração de TAC recebe a AST tipada do Dormant por uma interface estreita, sem depender do parser. É essa separação que permite, depois do semestre, alimentar a mesma análise com a AST de um transpilador (ver ADR 0005).
 
 ## 8. Escopo da primeira versão
 
@@ -355,8 +397,8 @@ flowchart TB
 
 ## 9. Estratégia de testes
 
-- **Testes do parser e do verificador de tipos:** programas válidos e inválidos, com as mensagens de erro esperadas.
-- **Testes diferenciais:** o mesmo programa executado (a) no Bun como TypeScript comum, (b) no interpretador do Dormant e (c) compilado; as saídas devem coincidir quando não há reinícios.
+- **Testes do parser e do verificador de tipos** (`cargo test`): programas válidos, com a AST esperada, e inválidos, com as mensagens de erro esperadas.
+- **Testes diferenciais:** o mesmo programa executado (a) como TypeScript comum num motor JavaScript, (b) no interpretador do Dormant e (c) compilado; as saídas devem coincidir quando não há reinícios.
 - **Testes de retomada:** para cada ponto de suspensão de um programa, interromper a execução naquele ponto, retomar, e verificar que a saída final é a mesma de uma execução sem interrupções, tanto no replay quanto no snapshot.
 - **Testes de compatibilidade:** pares de versões de um mesmo Workflow, com os Pontos de suspensão que o diagnóstico deve apontar como incompatíveis (ou nenhum).
 - **Testes do Manifesto de Steps:** Steps em código que a propagação de constantes e o DCE provam inalcançável saem do manifesto final; os demais permanecem.
@@ -377,7 +419,13 @@ flowchart TB
 
 - Compilador de C# (Roslyn) — geração de máquinas de estados para `async`/`await`: <https://github.com/dotnet/roslyn>
 - regenerator — transformação de generators e `async` em máquinas de estados em JavaScript: <https://github.com/facebook/regenerator>
+- A. Zakai, *Emscripten: An LLVM-to-JavaScript Compiler* — o Relooper, que reconstrói laços e desvios a partir de saltos: <https://github.com/emscripten-core/emscripten/blob/main/docs/paper.pdf>
 - Servidor web do Racket — continuações serializáveis geradas pelo compilador.
+
+**Implementação**
+
+- `nom` — parser combinators em Rust: <https://github.com/rust-bakery/nom>
+- MiniC — a linguagem de referência da disciplina, em Rust: <https://github.com/rbonifacio/MiniC>
 
 **Livros**
 

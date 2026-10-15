@@ -32,10 +32,12 @@ O Dormant gera essa máquina de estados a partir de código linear, usando **an�
 | Papel | Linguagem |
 |---|---|
 | Fonte | Dormant (subconjunto de TypeScript + diretivas `"use workflow"` / `"use step"`) |
-| Implementação | TypeScript, executado no [Bun](https://bun.sh) |
-| Alvo | JavaScript em forma de máquina de estados, executado no Bun por um runtime mínimo com SQLite |
+| Implementação | Rust |
+| Alvo | JavaScript em forma de máquina de estados, gerado a partir do TAC e executado por um Runtime mínimo em JavaScript, em qualquer motor JavaScript (Node, Deno, Bun) |
 
-Pipeline: parser (parser combinators próprios) → verificador de tipos → interpretador com replay · e, no compilador, TAC → otimizações (propagação de constantes, eliminação de código morto, subexpressões comuns) → liveness nos pontos de suspensão → JavaScript.
+Pipeline: parser ([`nom`](https://github.com/rust-bakery/nom), parser combinators em Rust) → verificador de tipos → interpretador com replay · e, no compilador, TAC → otimizações (propagação de constantes, eliminação de código morto, subexpressões comuns) → liveness nos pontos de suspensão → JavaScript gerado a partir do TAC.
+
+Interface prevista: uma CLI, com `dormant build arquivo.ts` (compila) e `dormant parse arquivo.ts` (imprime a AST).
 
 ## Status
 
@@ -45,6 +47,6 @@ Em desenvolvimento como projeto da disciplina de Construção de Compiladores (C
 
 - [Design](docs/design.md): a linguagem, a tese, a arquitetura e o escopo da v1.
 - [Roadmap](docs/roadmap.md): as quatro Entregas e o status de cada uma.
-- [Decisões (ADRs)](docs/adr/): por que snapshot compilado, por que TypeScript válido, por que TS + Bun, o que fica fora da v1.
+- [Decisões (ADRs)](docs/adr/): por que snapshot compilado, por que TypeScript válido, por que Rust com alvo JavaScript, o que fica fora da v1.
 - [Pesquisas](docs/research/) e [referências](docs/references.md): sistemas relacionados, com fontes primárias.
 - [Glossário](GLOSSARY.md).
