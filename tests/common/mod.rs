@@ -50,3 +50,26 @@ pub fn member(object: Expr, property: &str) -> Expr {
         property: property.to_string(),
     }
 }
+
+use dormant::ast::{Type, Value};
+
+pub fn plain(expr: Expr) -> Value {
+    Value {
+        awaited: false,
+        expr,
+    }
+}
+
+pub fn awaited(expr: Expr) -> Value {
+    Value {
+        awaited: true,
+        expr,
+    }
+}
+
+pub fn named(name: &str, dims: usize) -> Type {
+    Type::Named {
+        name: name.to_string(),
+        dims,
+    }
+}
