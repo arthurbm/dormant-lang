@@ -3,6 +3,41 @@
 //! São `enum`s e `struct`s sem posições, para que o verificador e o
 //! interpretador cubram cada construção por `match` exaustivo.
 
+/// Um programa: a lista das funções do arquivo, na ordem em que aparecem.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Program {
+    pub functions: Vec<Function>,
+}
+
+/// `export? async? function nome(params): Tipo { diretiva? corpo }`
+#[derive(Debug, Clone, PartialEq)]
+pub struct Function {
+    pub export: bool,
+    pub is_async: bool,
+    pub name: String,
+    pub params: Vec<Param>,
+    pub return_type: Type,
+    /// `"use workflow"` ou `"use step"`, se for o primeiro comando do corpo.
+    pub directive: Option<Directive>,
+    pub body: Block,
+}
+
+/// `nome: Tipo`
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Param {
+    pub name: String,
+    pub ty: Type,
+}
+
+/// A diretiva da Camada durável que marca uma função como Workflow ou Step.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Directive {
+    /// `"use workflow";`
+    Workflow,
+    /// `"use step";`
+    Step,
+}
+
 /// Um tipo anotado. Os nomes (`int`, `string`, …) ficam como identificadores:
 /// quem decide se um nome é um tipo válido é o verificador.
 #[derive(Debug, Clone, PartialEq, Eq)]
