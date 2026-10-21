@@ -370,12 +370,43 @@ flowchart TB
 
   O custo é aprender Rust junto com os conceitos de compiladores, e ter duas linguagens no projeto: o compilador em Rust; o Runtime e o harness dos testes em JavaScript.
 - **Parser:** um **parser combinator** é uma função pequena que reconhece um pedaço da entrada (um número, uma palavra-chave) e se combina com outras em parsers maiores (sequência, alternativa, repetição), de modo que o parser tem a forma da gramática. O Dormant usa a biblioteca de combinators `nom`, a mesma do MiniC. Escrever combinators genéricos próprios em Rust exige funções que recebem e devolvem closures, com lifetimes nos tipos, a parte mais dura da linguagem para quem está começando.
-- **Interface:** no semestre, só uma CLI: `dormant build arquivo.ts` compila, e `dormant parse arquivo.ts`, da Entrega 2, imprime a AST.
+- **Interface:** no semestre, só uma CLI: `dormant build arquivo.ts` compila (Entrega 4), e `dormant parse arquivo.ts`, já implementado na Entrega 2, imprime a AST (Seção 7.1).
 - **Alvo:** JavaScript gerado a partir do TAC otimizado (Seção 5.1), executado por um Runtime mínimo em JavaScript que agenda os `sleep`s, chama os Steps e persiste os Checkpoints. O Runtime acessa o armazenamento por uma interface pequena, então roda em qualquer motor JavaScript (Node, Deno, Bun). De reserva fica um segundo back-end sobre o mesmo TAC: bytecode próprio executado por uma VM em Rust (ADR 0005).
 - **TAC (código de três endereços):** cada instrução tem no máximo uma operação, o que torna explícitos os valores intermediários.
 - **CFG (grafo de fluxo de controle):** organiza o TAC em blocos básicos ligados pelos saltos possíveis. É sobre ele que rodam as análises de fluxo de dados (liveness, propagação de constantes).
 - **Saídas além do JavaScript:** para cada Workflow, o compilador emite o Layout de Checkpoints, que serve ao diagnóstico de compatibilidade entre versões, e o Manifesto de Steps (Seções 4.2 e 4.3).
 - **Fronteira entre a AST e o TAC:** a geração de TAC recebe a AST tipada do Dormant por uma interface estreita, sem depender do parser. É essa separação que permite, depois do semestre, alimentar a mesma análise com a AST de um transpilador (ver ADR 0005).
+
+### 7.1 Organização do parser (Entrega 2)
+
+O parser lê o texto de um programa da v1 e devolve a sua **AST** (árvore sintática abstrata): a estrutura do programa, já sem espaços, comentários e pontuação. Ele fica na biblioteca do crate `dormant`, em `src/parser/`, com um módulo por camada da gramática de [`grammar.md`](grammar.md). Assim, o código de cada regra se encontra lendo a gramática:
+
+```mermaid
+flowchart LR
+    SRC["texto .ts"] --> PROG
+    subgraph P["src/parser/"]
+        direction LR
+        PROG["program<br/>Program, Function, Params,<br/>Type, FunctionBody, Directive"] --> STMT["statements<br/>Stmt, VarDecl, Assign, If,<br/>While, Return, Block, Value"]
+        STMT --> EXPR["expressions<br/>Or … Primary"]
+        EXPR --> LEX["lexical<br/>ident, int, float, string,<br/>palavras reservadas, símbolos"]
+        PROG --> LEX
+        STMT --> LEX
+    end
+    PROG --> AST["AST<br/>(src/ast.rs)"]
+    PROG -.->|"erro"| ERR["ParseError<br/>linha, coluna, mensagem"]
+```
+
+As setas indicam quem chama quem. Cada não terminal da gramática é uma função pública com a assinatura de parser do `nom` (recebe o texto, devolve o resto e o valor reconhecido, ou um erro), e os testes de unidade chamam essas funções diretamente. A porta de entrada é `parse_program(texto) -> Result<Program, ParseError>`, usada pela CLI e pelos testes dos programas de exemplo.
+
+- **Camada léxica sem lexer separado.** Não existe uma fase que transforma o texto numa lista de tokens antes do parser. Cada parser de token reconhece o próprio texto e depois consome o espaço e os comentários `//` que vêm em seguida; só o começo do arquivo precisa de um consumo explícito. No diagrama do pipeline (`docs/diagrams/pipeline.png`), as caixas "Lexer" e "Parser" são essas duas camadas do mesmo parser, não duas passagens.
+- **Palavras reservadas por palavra inteira.** `while` só casa se o caractere seguinte não puder continuar um identificador, então `whilex` é um nome. Os nomes de tipo (`int`, `string`…) e `Promise` não são reservados: chegam ao verificador como identificadores.
+- **Operadores pelo mais longo.** `<=` nunca é lido como `<` seguido de `=`, o `=` da atribuição não casa com o começo de `===`, e o `-` não casa com o começo de `--` (decremento em TypeScript, fora da v1).
+- **Precedência por função.** Há uma função por nível, de `Or` (agrupa por último) a `Primary`. Cada nível binário lê `X ( op X )*` e dobra os pares à esquerda, o que dá `a - b - c = (a - b) - c`. A gramática não tem recursão à esquerda, que faria um parser descendente chamar a si mesmo sem consumir nada.
+- **Retrocesso controlado com `cut`.** Uma alternativa (`alt`) que falha devolve a entrada intacta para a próxima. Depois de uma palavra reservada que abre um comando ou uma função (`if`, `while`, `return`, `let`, `const`, `function`), e depois do `=` de uma atribuição, o parser usa `cut`: dali em diante só aquela regra serve, e um erro aponta o lugar real da falha em vez de o `alt` voltar atrás e acusar o começo do comando.
+- **Parser estrito.** O programa inteiro precisa ser consumido (`all_consuming`); texto que sobra depois da última função é erro, e um arquivo vazio ou só com comentários é um programa sem funções. O `;` é obrigatório.
+- **Diretivas só no começo do corpo.** `"use workflow";` e `"use step";` são reconhecidos apenas como o primeiro comando de uma função, como em TypeScript. Em qualquer outro lugar são uma string solta.
+- **A AST garante a regra do `await`.** `await` só existe em `Value ::= "await"? Expr`, que aparece em declarações, atribuições e comandos de expressão. Como `Expr` não tem caso para `await`, `g(await f())` é recusado na sintaxe e nem pode ser representado. A AST não guarda posições por enquanto, e as strings guardam o texto como foi escrito, com os escapes intactos.
+- **Erros com linha e coluna.** O `nom` informa o resto da entrada no ponto da falha; o offset é o tamanho total menos o desse resto, convertido em linha e coluna (contadas a partir de 1, em caracteres). Quando falta um `;`, a posição recua até o fim do token anterior, onde o `;` devia estar. O parser para no primeiro erro.
 
 ## 8. Escopo da primeira versão
 

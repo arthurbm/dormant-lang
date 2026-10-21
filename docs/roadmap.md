@@ -5,8 +5,8 @@ O Dormant é construído em quatro Entregas, uma por etapa do compilador. Cada E
 | Entrega | Compilador base | Camada durável | Status |
 |---|---|---|---|
 | **1** | Definição da linguagem | Tese, posicionamento e regras específicas ([`design.md`](design.md)) | ✅ definida |
-| **2** | Gramática ([`grammar.md`](grammar.md)); parser em `nom` para todo o subconjunto da v1, que devolve a AST e rejeita entrada que sobra; `dormant parse arquivo.ts` imprime a AST; suíte `cargo test` com programas válidos (AST esperada) e inválidos | Reconhecimento das diretivas `"use workflow"` / `"use step"` | ⏳ próxima |
-| **3** | Verificador de tipos; interpretador | Regras de durabilidade no verificador; Manifesto de Steps conservador; interpretador com **replay** (log de Steps), demonstrado matando o processo no meio e retomando | — |
+| **2** | Gramática ([`grammar.md`](grammar.md)); parser em `nom` para todo o subconjunto da v1, que devolve a AST e rejeita entrada que sobra; `dormant parse arquivo.ts` imprime a AST; suíte `cargo test` com programas válidos (AST esperada) e inválidos | Reconhecimento das diretivas `"use workflow"` / `"use step"` | ✅ implementada ([`design.md`](design.md), Seção 7.1) |
+| **3** | Verificador de tipos; interpretador | Regras de durabilidade no verificador; Manifesto de Steps conservador; interpretador com **replay** (log de Steps), demonstrado matando o processo no meio e retomando | ⏳ próxima |
 | **4** | Geração de TAC; CFG; propagação de constantes, eliminação de código morto, eliminação de subexpressões comuns | Liveness nos pontos de suspensão; geração da máquina de estados com **snapshot**, em JavaScript gerado a partir do TAC otimizado (`dormant build arquivo.ts`); Runtime mínimo em JavaScript, independente do motor JavaScript; Layout de Checkpoints com diagnóstico de compatibilidade entre versões; Manifesto de Steps refinado por propagação de constantes e DCE | — |
 
 Ao final, o projeto terá implementado **as duas estratégias de retomada** (replay no interpretador, snapshot no compilador), o que permite compará-las com base em implementação própria.

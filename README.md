@@ -37,13 +37,30 @@ O Dormant gera essa máquina de estados a partir de código linear, usando **an�
 
 Pipeline: parser ([`nom`](https://github.com/rust-bakery/nom), parser combinators em Rust) → verificador de tipos → interpretador com replay · e, no compilador, TAC → otimizações (propagação de constantes, eliminação de código morto, subexpressões comuns) → liveness nos pontos de suspensão → JavaScript gerado a partir do TAC.
 
-Interface prevista: uma CLI, com `dormant build arquivo.ts` (compila) e `dormant parse arquivo.ts` (imprime a AST).
+Interface: uma CLI. `dormant parse arquivo.ts` (imprime a AST) já existe; `dormant build arquivo.ts` (compila) vem na Entrega 4.
 
 O diagrama do pipeline, com a Entrega de cada etapa, está em [`docs/diagrams/pipeline.excalidraw`](docs/diagrams/pipeline.excalidraw) (abra no [Excalidraw](https://excalidraw.com) ou na extensão do VS Code).
 
+## Como rodar
+
+Requer Rust (`cargo`).
+
+```sh
+cargo run -- parse tests/fixtures/valid/invoice.ts   # imprime a AST do Workflow da fatura
+cargo test                                            # testes do parser e da CLI
+cargo test --test tsc -- --ignored                    # opcional: confere os exemplos no tsc (requer Node)
+```
+
+Num erro de sintaxe, `dormant parse` imprime `arquivo:linha:coluna: mensagem` e sai com código 1:
+
+```text
+$ cargo run -q -- parse tests/fixtures/invalid/missing-semicolon.ts
+tests/fixtures/invalid/missing-semicolon.ts:2:12: esperava `;`, encontrou `console`
+```
+
 ## Status
 
-Em desenvolvimento como projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2). O design está definido; a implementação começa pelo parser. Veja o [roadmap](docs/roadmap.md).
+Em desenvolvimento como projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2). A Entrega 2 está implementada: o parser da v1 em `nom` (`src/parser/`), a AST (`src/ast.rs`), a CLI `dormant parse` e a suíte de testes (`tests/`). A próxima etapa é o verificador de tipos e o interpretador com Replay. Veja o [roadmap](docs/roadmap.md).
 
 ## Documentação
 
