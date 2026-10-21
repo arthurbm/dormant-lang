@@ -10,8 +10,8 @@ use nom::{
 };
 
 use crate::ast::{Block, Directive, Function, Param, Program, Type};
-use crate::parser::lexical::{ident, keyword, lexeme, symbol, ws};
-use crate::parser::statements::stmt;
+use crate::parser::lexical::{ident, keyword, lexeme, semicolon, symbol, ws};
+use crate::parser::statements::stmts_until_brace;
 
 /// `Program ::= Function* EOF`
 ///
@@ -102,11 +102,7 @@ pub fn type_(input: &str) -> IResult<&str, Type> {
 /// TypeScript. Em qualquer outro lugar (depois de outro comando, dentro de um
 /// `Block`), `"use step";` é um `ExprStmt` com uma string.
 pub fn function_body(input: &str) -> IResult<&str, (Option<Directive>, Block)> {
-    preceded(
-        symbol("{"),
-        cut(terminated(pair(opt(directive), many0(stmt)), symbol("}"))),
-    )
-    .parse(input)
+    preceded(symbol("{"), cut(pair(opt(directive), stmts_until_brace))).parse(input)
 }
 
 /// `Directive ::= ( '"use workflow"' | '"use step"' ) ";"`
@@ -120,7 +116,7 @@ pub fn directive(input: &str) -> IResult<&str, Directive> {
             value(Directive::Workflow, lexeme(tag("\"use workflow\""))),
             value(Directive::Step, lexeme(tag("\"use step\""))),
         )),
-        symbol(";"),
+        semicolon,
     )
     .parse(input)
 }
