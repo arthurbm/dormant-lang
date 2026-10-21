@@ -15,19 +15,16 @@ const USAGE_ERROR: u8 = 2;
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let [command, path] = args.as_slice() else {
-        eprintln!("{USAGE}");
-        return ExitCode::from(USAGE_ERROR);
+        return usage_error();
     };
     if command != "parse" {
-        eprintln!("{USAGE}");
-        return ExitCode::from(USAGE_ERROR);
+        return usage_error();
     }
     let source = match std::fs::read_to_string(path) {
         Ok(source) => source,
         Err(err) => {
             eprintln!("{path}: {err}");
-            eprintln!("{USAGE}");
-            return ExitCode::from(USAGE_ERROR);
+            return usage_error();
         }
     };
     match dormant::parse_program(&source) {
@@ -40,4 +37,10 @@ fn main() -> ExitCode {
             ExitCode::from(SYNTAX_ERROR)
         }
     }
+}
+
+/// Imprime o uso em stderr e devolve o código de uso errado.
+fn usage_error() -> ExitCode {
+    eprintln!("{USAGE}");
+    ExitCode::from(USAGE_ERROR)
 }

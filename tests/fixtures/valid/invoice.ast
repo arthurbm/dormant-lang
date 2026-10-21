@@ -156,7 +156,7 @@ Program {
                 Step,
             ),
             body: [
-                Expr(
+                ExprStmt(
                     Value {
                         awaited: false,
                         expr: Call {
@@ -267,7 +267,7 @@ Program {
                         },
                     },
                 },
-                Expr(
+                ExprStmt(
                     Value {
                         awaited: true,
                         expr: Call {
@@ -323,7 +323,7 @@ Program {
                         else_branch: None,
                     },
                 ),
-                Expr(
+                ExprStmt(
                     Value {
                         awaited: true,
                         expr: Call {
@@ -338,7 +338,7 @@ Program {
                         },
                     },
                 ),
-                Expr(
+                ExprStmt(
                     Value {
                         awaited: true,
                         expr: Call {

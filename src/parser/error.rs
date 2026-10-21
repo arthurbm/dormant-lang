@@ -4,7 +4,7 @@ use std::fmt;
 
 use nom::error::ErrorKind;
 
-use crate::parser::lexical::{EXPECTED_SEMICOLON, RESERVED};
+use crate::parser::lexical::{EXPECTED_SEMICOLON, RESERVED, is_ident_char};
 
 /// Um erro de sintaxe. A linha e a coluna contam a partir de 1, e a coluna
 /// conta caracteres, não bytes.
@@ -71,24 +71,22 @@ fn message(rest: &str, kind: ErrorKind) -> String {
     if kind == ErrorKind::Eof {
         return format!("texto sobrando depois da última função: {found}");
     }
-    if kind == EXPECTED_SEMICOLON {
-        return format!("esperava `;`, encontrou {found}");
-    }
     let hint = match found.trim_matches('`') {
         "await" => " (`await` só pode vir no começo de um comando ou logo depois de `=`)",
         word if RESERVED.contains(&word) => " (palavra reservada)",
         _ => "",
     };
+    if kind == EXPECTED_SEMICOLON {
+        return format!("esperava `;`, encontrou {found}{hint}");
+    }
     format!("erro de sintaxe: encontrou {found}{hint}")
 }
 
 /// O token que começa em `rest`: uma palavra inteira ou um único caractere.
 fn found_token(rest: &str) -> Option<&str> {
     let first = rest.chars().next()?;
-    if first.is_ascii_alphanumeric() || first == '_' {
-        let end = rest
-            .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
-            .unwrap_or(rest.len());
+    if is_ident_char(first) {
+        let end = rest.find(|c| !is_ident_char(c)).unwrap_or(rest.len());
         Some(&rest[..end])
     } else {
         Some(&rest[..first.len_utf8()])

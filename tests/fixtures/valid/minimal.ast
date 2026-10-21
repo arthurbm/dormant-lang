@@ -11,7 +11,7 @@ Program {
             },
             directive: None,
             body: [
-                Expr(
+                ExprStmt(
                     Value {
                         awaited: false,
                         expr: Call {

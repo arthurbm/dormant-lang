@@ -116,8 +116,8 @@ fn function_body_diretiva_fora_do_comeco_e_comando() {
             (
                 None,
                 vec![
-                    Stmt::Expr(plain(call(id("f"), vec![]))),
-                    Stmt::Expr(plain(str_lit("use step"))),
+                    Stmt::ExprStmt(plain(call(id("f"), vec![]))),
+                    Stmt::ExprStmt(plain(str_lit("use step"))),
                 ]
             )
         ))
@@ -132,7 +132,7 @@ fn function_body_string_que_nao_e_diretiva_e_comando() {
             "",
             (
                 None,
-                vec![Stmt::Expr(plain(bin(
+                vec![Stmt::ExprStmt(plain(bin(
                     dormant::ast::BinaryOp::Add,
                     str_lit("use workflow"),
                     id("x")
@@ -234,4 +234,12 @@ fn parse_program_devolve_a_ast() {
 fn parse_program_devolve_linha_e_coluna() {
     let err = parse_program("function a(): void {}\n  @@@").unwrap_err();
     assert_eq!((err.line, err.column), (2, 3));
+}
+
+#[test]
+fn export_ou_async_sem_function_e_erro_no_ponto() {
+    match function("export async f(): void {}") {
+        Err(Err::Failure(e)) => assert!(e.input.starts_with("f()")),
+        outro => panic!("esperava Failure no `f`, veio {outro:?}"),
+    }
 }

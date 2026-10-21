@@ -129,3 +129,15 @@ fn coluna_conta_caracteres_e_nao_bytes() {
     let err = parse_program("// ação é\nfunction f(): void { é }").unwrap_err();
     assert_eq!((err.line, err.column), (2, 22));
 }
+
+#[test]
+fn await_depois_de_return_ganha_a_dica_do_await() {
+    let err =
+        parse_program("async function f(): Promise<int> {\n  return await g();\n}").unwrap_err();
+    assert_eq!((err.line, err.column), (2, 9));
+    assert!(
+        err.message.contains("começo de um comando"),
+        "{}",
+        err.message
+    );
+}

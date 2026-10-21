@@ -82,7 +82,7 @@ pub fn assign(input: &str) -> IResult<&str, Stmt> {
 
 /// `ExprStmt ::= Value ";"`
 pub fn expr_stmt(input: &str) -> IResult<&str, Stmt> {
-    map(terminated(value_expr, semicolon), Stmt::Expr).parse(input)
+    map(terminated(value_expr, semicolon), Stmt::ExprStmt).parse(input)
 }
 
 /// `Value ::= "await"? Expr`

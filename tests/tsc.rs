@@ -1,5 +1,5 @@
 //! Compatibilidade com TypeScript: todo programa válido do Dormant também é
-//! TypeScript válido (história 36).
+//! TypeScript válido (issue #3, história 36).
 //!
 //! Ignorado por padrão, porque depende de Node e de rede (`npx` baixa o
 //! pacote `typescript`). Para rodar: `cargo test --test tsc -- --ignored`.
