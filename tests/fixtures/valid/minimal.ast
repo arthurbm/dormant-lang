@@ -1,0 +1,35 @@
+Program {
+    functions: [
+        Function {
+            export: false,
+            is_async: false,
+            name: "main",
+            params: [],
+            return_type: Named {
+                name: "void",
+                dims: 0,
+            },
+            directive: None,
+            body: [
+                Expr(
+                    Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Member {
+                                object: Ident(
+                                    "console",
+                                ),
+                                property: "log",
+                            },
+                            args: [
+                                Str(
+                                    "oi",
+                                ),
+                            ],
+                        },
+                    },
+                ),
+            ],
+        },
+    ],
+}
