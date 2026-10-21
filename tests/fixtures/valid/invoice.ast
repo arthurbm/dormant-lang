@@ -1,0 +1,407 @@
+Program {
+    functions: [
+        Function {
+            export: false,
+            is_async: true,
+            name: "buscarValor",
+            params: [
+                Param {
+                    name: "pedido",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Promise(
+                Named {
+                    name: "int",
+                    dims: 0,
+                },
+            ),
+            directive: Some(
+                Step,
+            ),
+            body: [
+                Return(
+                    Some(
+                        Binary {
+                            op: Mul,
+                            lhs: Ident(
+                                "pedido",
+                            ),
+                            rhs: Int(
+                                100,
+                            ),
+                        },
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: true,
+            name: "emitirFatura",
+            params: [
+                Param {
+                    name: "pedido",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+                Param {
+                    name: "total",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Promise(
+                Named {
+                    name: "string",
+                    dims: 0,
+                },
+            ),
+            directive: Some(
+                Step,
+            ),
+            body: [
+                Return(
+                    Some(
+                        Binary {
+                            op: Add,
+                            lhs: Binary {
+                                op: Add,
+                                lhs: Binary {
+                                    op: Add,
+                                    lhs: Str(
+                                        "fatura-",
+                                    ),
+                                    rhs: Ident(
+                                        "pedido",
+                                    ),
+                                },
+                                rhs: Str(
+                                    "-",
+                                ),
+                            },
+                            rhs: Ident(
+                                "total",
+                            ),
+                        },
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: true,
+            name: "consultarPagamento",
+            params: [
+                Param {
+                    name: "fatura",
+                    ty: Named {
+                        name: "string",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Promise(
+                Named {
+                    name: "boolean",
+                    dims: 0,
+                },
+            ),
+            directive: Some(
+                Step,
+            ),
+            body: [
+                Return(
+                    Some(
+                        Binary {
+                            op: StrictEq,
+                            lhs: Ident(
+                                "fatura",
+                            ),
+                            rhs: Str(
+                                "fatura-paga",
+                            ),
+                        },
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: true,
+            name: "enviarLembrete",
+            params: [
+                Param {
+                    name: "fatura",
+                    ty: Named {
+                        name: "string",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Promise(
+                Named {
+                    name: "void",
+                    dims: 0,
+                },
+            ),
+            directive: Some(
+                Step,
+            ),
+            body: [
+                Expr(
+                    Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Member {
+                                object: Ident(
+                                    "console",
+                                ),
+                                property: "log",
+                            },
+                            args: [
+                                Binary {
+                                    op: Add,
+                                    lhs: Binary {
+                                        op: Add,
+                                        lhs: Str(
+                                            "Lembrete: a fatura ",
+                                        ),
+                                        rhs: Ident(
+                                            "fatura",
+                                        ),
+                                    },
+                                    rhs: Str(
+                                        " ainda não foi paga.",
+                                    ),
+                                },
+                            ],
+                        },
+                    },
+                ),
+            ],
+        },
+        Function {
+            export: true,
+            is_async: true,
+            name: "cobrar",
+            params: [
+                Param {
+                    name: "pedido",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Promise(
+                Named {
+                    name: "string",
+                    dims: 0,
+                },
+            ),
+            directive: Some(
+                Workflow,
+            ),
+            body: [
+                VarDecl {
+                    kind: Const,
+                    name: "valor",
+                    ty: None,
+                    value: Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "buscarValor",
+                            ),
+                            args: [
+                                Ident(
+                                    "pedido",
+                                ),
+                            ],
+                        },
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "total",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Binary {
+                            op: Add,
+                            lhs: Ident(
+                                "valor",
+                            ),
+                            rhs: Int(
+                                500,
+                            ),
+                        },
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "fatura",
+                    ty: None,
+                    value: Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "emitirFatura",
+                            ),
+                            args: [
+                                Ident(
+                                    "pedido",
+                                ),
+                                Ident(
+                                    "total",
+                                ),
+                            ],
+                        },
+                    },
+                },
+                Expr(
+                    Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "sleep",
+                            ),
+                            args: [
+                                Binary {
+                                    op: Mul,
+                                    lhs: Int(
+                                        3,
+                                    ),
+                                    rhs: Ident(
+                                        "DIA",
+                                    ),
+                                },
+                            ],
+                        },
+                    },
+                ),
+                VarDecl {
+                    kind: Const,
+                    name: "pago",
+                    ty: None,
+                    value: Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "consultarPagamento",
+                            ),
+                            args: [
+                                Ident(
+                                    "fatura",
+                                ),
+                            ],
+                        },
+                    },
+                },
+                If(
+                    If {
+                        cond: Ident(
+                            "pago",
+                        ),
+                        then_block: [
+                            Return(
+                                Some(
+                                    Str(
+                                        "pago",
+                                    ),
+                                ),
+                            ),
+                        ],
+                        else_branch: None,
+                    },
+                ),
+                Expr(
+                    Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "enviarLembrete",
+                            ),
+                            args: [
+                                Ident(
+                                    "fatura",
+                                ),
+                            ],
+                        },
+                    },
+                ),
+                Expr(
+                    Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "sleep",
+                            ),
+                            args: [
+                                Binary {
+                                    op: Mul,
+                                    lhs: Int(
+                                        2,
+                                    ),
+                                    rhs: Ident(
+                                        "DIA",
+                                    ),
+                                },
+                            ],
+                        },
+                    },
+                ),
+                VarDecl {
+                    kind: Const,
+                    name: "pagoDepois",
+                    ty: None,
+                    value: Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "consultarPagamento",
+                            ),
+                            args: [
+                                Ident(
+                                    "fatura",
+                                ),
+                            ],
+                        },
+                    },
+                },
+                If(
+                    If {
+                        cond: Ident(
+                            "pagoDepois",
+                        ),
+                        then_block: [
+                            Return(
+                                Some(
+                                    Str(
+                                        "pago depois do lembrete",
+                                    ),
+                                ),
+                            ),
+                        ],
+                        else_branch: None,
+                    },
+                ),
+                Return(
+                    Some(
+                        Str(
+                            "em atraso",
+                        ),
+                    ),
+                ),
+            ],
+        },
+    ],
+}

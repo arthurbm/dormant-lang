@@ -1,0 +1,807 @@
+Program {
+    functions: [
+        Function {
+            export: false,
+            is_async: false,
+            name: "media",
+            params: [
+                Param {
+                    name: "a",
+                    ty: Named {
+                        name: "float",
+                        dims: 0,
+                    },
+                },
+                Param {
+                    name: "b",
+                    ty: Named {
+                        name: "float",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Named {
+                name: "float",
+                dims: 0,
+            },
+            directive: None,
+            body: [
+                Return(
+                    Some(
+                        Binary {
+                            op: Div,
+                            lhs: Binary {
+                                op: Add,
+                                lhs: Ident(
+                                    "a",
+                                ),
+                                rhs: Ident(
+                                    "b",
+                                ),
+                            },
+                            rhs: Float(
+                                2.0,
+                            ),
+                        },
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: false,
+            name: "soma",
+            params: [
+                Param {
+                    name: "xs",
+                    ty: Named {
+                        name: "int",
+                        dims: 1,
+                    },
+                },
+                Param {
+                    name: "n",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Named {
+                name: "int",
+                dims: 0,
+            },
+            directive: None,
+            body: [
+                VarDecl {
+                    kind: Let,
+                    name: "total",
+                    ty: Some(
+                        Named {
+                            name: "int",
+                            dims: 0,
+                        },
+                    ),
+                    value: Value {
+                        awaited: false,
+                        expr: Int(
+                            0,
+                        ),
+                    },
+                },
+                VarDecl {
+                    kind: Let,
+                    name: "i",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Int(
+                            0,
+                        ),
+                    },
+                },
+                While {
+                    cond: Binary {
+                        op: Lt,
+                        lhs: Ident(
+                            "i",
+                        ),
+                        rhs: Ident(
+                            "n",
+                        ),
+                    },
+                    body: [
+                        Assign {
+                            name: "total",
+                            value: Value {
+                                awaited: false,
+                                expr: Binary {
+                                    op: Sub,
+                                    lhs: Binary {
+                                        op: Add,
+                                        lhs: Ident(
+                                            "total",
+                                        ),
+                                        rhs: Binary {
+                                            op: Mul,
+                                            lhs: Index {
+                                                target: Ident(
+                                                    "xs",
+                                                ),
+                                                index: Ident(
+                                                    "i",
+                                                ),
+                                            },
+                                            rhs: Int(
+                                                1,
+                                            ),
+                                        },
+                                    },
+                                    rhs: Binary {
+                                        op: Rem,
+                                        lhs: Int(
+                                            0,
+                                        ),
+                                        rhs: Int(
+                                            7,
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                        Assign {
+                            name: "i",
+                            value: Value {
+                                awaited: false,
+                                expr: Binary {
+                                    op: Add,
+                                    lhs: Ident(
+                                        "i",
+                                    ),
+                                    rhs: Int(
+                                        1,
+                                    ),
+                                },
+                            },
+                        },
+                    ],
+                },
+                Return(
+                    Some(
+                        Ident(
+                            "total",
+                        ),
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: false,
+            name: "primeiros",
+            params: [],
+            return_type: Named {
+                name: "int",
+                dims: 1,
+            },
+            directive: None,
+            body: [
+                Return(
+                    Some(
+                        List(
+                            [
+                                Int(
+                                    1,
+                                ),
+                                Int(
+                                    2,
+                                ),
+                                Int(
+                                    3,
+                                ),
+                            ],
+                        ),
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: false,
+            name: "classificar",
+            params: [
+                Param {
+                    name: "x",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+                Param {
+                    name: "ativo",
+                    ty: Named {
+                        name: "boolean",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Named {
+                name: "string",
+                dims: 0,
+            },
+            directive: None,
+            body: [
+                If(
+                    If {
+                        cond: Binary {
+                            op: Or,
+                            lhs: Unary {
+                                op: Not,
+                                operand: Ident(
+                                    "ativo",
+                                ),
+                            },
+                            rhs: Binary {
+                                op: And,
+                                lhs: Binary {
+                                    op: Le,
+                                    lhs: Ident(
+                                        "x",
+                                    ),
+                                    rhs: Int(
+                                        0,
+                                    ),
+                                },
+                                rhs: Binary {
+                                    op: StrictNe,
+                                    lhs: Ident(
+                                        "x",
+                                    ),
+                                    rhs: Unary {
+                                        op: Neg,
+                                        operand: Int(
+                                            1,
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                        then_block: [
+                            Return(
+                                Some(
+                                    Str(
+                                        "inativo",
+                                    ),
+                                ),
+                            ),
+                        ],
+                        else_branch: Some(
+                            If(
+                                If {
+                                    cond: Binary {
+                                        op: Ge,
+                                        lhs: Ident(
+                                            "x",
+                                        ),
+                                        rhs: Int(
+                                            100,
+                                        ),
+                                    },
+                                    then_block: [
+                                        Return(
+                                            Some(
+                                                Str(
+                                                    "grande",
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                    else_branch: Some(
+                                        If(
+                                            If {
+                                                cond: Binary {
+                                                    op: And,
+                                                    lhs: Binary {
+                                                        op: Gt,
+                                                        lhs: Ident(
+                                                            "x",
+                                                        ),
+                                                        rhs: Int(
+                                                            10,
+                                                        ),
+                                                    },
+                                                    rhs: Binary {
+                                                        op: StrictEq,
+                                                        lhs: Ident(
+                                                            "x",
+                                                        ),
+                                                        rhs: Int(
+                                                            50,
+                                                        ),
+                                                    },
+                                                },
+                                                then_block: [
+                                                    Return(
+                                                        Some(
+                                                            Str(
+                                                                "cinquenta",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                                else_branch: Some(
+                                                    Block(
+                                                        [
+                                                            Expr(
+                                                                Value {
+                                                                    awaited: false,
+                                                                    expr: Str(
+                                                                        "use step",
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ),
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                    },
+                ),
+                If(
+                    If {
+                        cond: Binary {
+                            op: Lt,
+                            lhs: Ident(
+                                "x",
+                            ),
+                            rhs: Int(
+                                5,
+                            ),
+                        },
+                        then_block: [
+                            Return(
+                                Some(
+                                    Str(
+                                        "pequeno",
+                                    ),
+                                ),
+                            ),
+                        ],
+                        else_branch: None,
+                    },
+                ),
+                Return(
+                    Some(
+                        Str(
+                            "médio",
+                        ),
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: false,
+            is_async: false,
+            name: "nomes",
+            params: [],
+            return_type: Named {
+                name: "void",
+                dims: 0,
+            },
+            directive: None,
+            body: [
+                VarDecl {
+                    kind: Const,
+                    name: "whilex",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Int(
+                            1,
+                        ),
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "constante",
+                    ty: Some(
+                        Named {
+                            name: "string",
+                            dims: 2,
+                        },
+                    ),
+                    value: Value {
+                        awaited: false,
+                        expr: List(
+                            [
+                                List(
+                                    [
+                                        Str(
+                                            "a",
+                                        ),
+                                        Str(
+                                            "b",
+                                        ),
+                                    ],
+                                ),
+                                List(
+                                    [],
+                                ),
+                            ],
+                        ),
+                    },
+                },
+                VarDecl {
+                    kind: Let,
+                    name: "returnValue",
+                    ty: Some(
+                        Named {
+                            name: "boolean",
+                            dims: 0,
+                        },
+                    ),
+                    value: Value {
+                        awaited: false,
+                        expr: Bool(
+                            true,
+                        ),
+                    },
+                },
+                Assign {
+                    name: "returnValue",
+                    value: Value {
+                        awaited: false,
+                        expr: Bool(
+                            false,
+                        ),
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "texto",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Str(
+                            "linha\\n\\\"aspas\\\"\\\\",
+                        ),
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "vazio",
+                    ty: Some(
+                        Named {
+                            name: "string",
+                            dims: 1,
+                        },
+                    ),
+                    value: Value {
+                        awaited: false,
+                        expr: List(
+                            [],
+                        ),
+                    },
+                },
+                Expr(
+                    Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Member {
+                                object: Ident(
+                                    "console",
+                                ),
+                                property: "log",
+                            },
+                            args: [
+                                Ident(
+                                    "whilex",
+                                ),
+                                Index {
+                                    target: Index {
+                                        target: Ident(
+                                            "constante",
+                                        ),
+                                        index: Int(
+                                            0,
+                                        ),
+                                    },
+                                    index: Int(
+                                        1,
+                                    ),
+                                },
+                                Ident(
+                                    "returnValue",
+                                ),
+                                Ident(
+                                    "texto",
+                                ),
+                                Ident(
+                                    "vazio",
+                                ),
+                            ],
+                        },
+                    },
+                ),
+                Return(
+                    None,
+                ),
+            ],
+        },
+        Function {
+            export: true,
+            is_async: true,
+            name: "listar",
+            params: [
+                Param {
+                    name: "n",
+                    ty: Named {
+                        name: "int",
+                        dims: 0,
+                    },
+                },
+            ],
+            return_type: Promise(
+                Named {
+                    name: "int",
+                    dims: 1,
+                },
+            ),
+            directive: Some(
+                Step,
+            ),
+            body: [
+                Expr(
+                    Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Member {
+                                object: Ident(
+                                    "console",
+                                ),
+                                property: "log",
+                            },
+                            args: [
+                                Str(
+                                    "listando",
+                                ),
+                                Ident(
+                                    "n",
+                                ),
+                            ],
+                        },
+                    },
+                ),
+                Return(
+                    Some(
+                        List(
+                            [
+                                Ident(
+                                    "n",
+                                ),
+                                Binary {
+                                    op: Add,
+                                    lhs: Ident(
+                                        "n",
+                                    ),
+                                    rhs: Int(
+                                        1,
+                                    ),
+                                },
+                            ],
+                        ),
+                    ),
+                ),
+            ],
+        },
+        Function {
+            export: true,
+            is_async: true,
+            name: "principal",
+            params: [],
+            return_type: Promise(
+                Named {
+                    name: "void",
+                    dims: 0,
+                },
+            ),
+            directive: Some(
+                Workflow,
+            ),
+            body: [
+                VarDecl {
+                    kind: Const,
+                    name: "xs",
+                    ty: None,
+                    value: Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "listar",
+                            ),
+                            args: [
+                                Int(
+                                    3,
+                                ),
+                            ],
+                        },
+                    },
+                },
+                VarDecl {
+                    kind: Let,
+                    name: "ys",
+                    ty: Some(
+                        Named {
+                            name: "int",
+                            dims: 1,
+                        },
+                    ),
+                    value: Value {
+                        awaited: false,
+                        expr: Ident(
+                            "xs",
+                        ),
+                    },
+                },
+                Assign {
+                    name: "ys",
+                    value: Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "listar",
+                            ),
+                            args: [
+                                Call {
+                                    callee: Ident(
+                                        "soma",
+                                    ),
+                                    args: [
+                                        Call {
+                                            callee: Ident(
+                                                "primeiros",
+                                            ),
+                                            args: [],
+                                        },
+                                        Int(
+                                            3,
+                                        ),
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+                Expr(
+                    Value {
+                        awaited: true,
+                        expr: Call {
+                            callee: Ident(
+                                "sleep",
+                            ),
+                            args: [
+                                Binary {
+                                    op: Mul,
+                                    lhs: Int(
+                                        10,
+                                    ),
+                                    rhs: Ident(
+                                        "SEGUNDO",
+                                    ),
+                                },
+                            ],
+                        },
+                    },
+                ),
+                VarDecl {
+                    kind: Const,
+                    name: "m",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Ident(
+                                "media",
+                            ),
+                            args: [
+                                Float(
+                                    1.5,
+                                ),
+                                Call {
+                                    callee: Ident(
+                                        "soma",
+                                    ),
+                                    args: [
+                                        Ident(
+                                            "ys",
+                                        ),
+                                        Int(
+                                            2,
+                                        ),
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "primeiro",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Index {
+                            target: Call {
+                                callee: Ident(
+                                    "primeiros",
+                                ),
+                                args: [],
+                            },
+                            index: Int(
+                                0,
+                            ),
+                        },
+                    },
+                },
+                VarDecl {
+                    kind: Const,
+                    name: "rotulo",
+                    ty: None,
+                    value: Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Ident(
+                                "classificar",
+                            ),
+                            args: [
+                                Binary {
+                                    op: Add,
+                                    lhs: Ident(
+                                        "primeiro",
+                                    ),
+                                    rhs: Unary {
+                                        op: Neg,
+                                        operand: Int(
+                                            1,
+                                        ),
+                                    },
+                                },
+                                Binary {
+                                    op: Gt,
+                                    lhs: Ident(
+                                        "m",
+                                    ),
+                                    rhs: Float(
+                                        0.5,
+                                    ),
+                                },
+                            ],
+                        },
+                    },
+                },
+                Expr(
+                    Value {
+                        awaited: false,
+                        expr: Call {
+                            callee: Member {
+                                object: Ident(
+                                    "console",
+                                ),
+                                property: "log",
+                            },
+                            args: [
+                                Ident(
+                                    "rotulo",
+                                ),
+                            ],
+                        },
+                    },
+                ),
+            ],
+        },
+    ],
+}
