@@ -100,9 +100,10 @@ pub fn ident(input: &str) -> IResult<&str, &str> {
 
 /// Os dígitos de um inteiro: `"0" | [1-9] [0-9]*`.
 ///
-/// Usa `take_while` em vez de `digit0`/`digit1`: no `nom` 8.0.0,
-/// `recognize(pair(satisfy(..), digit0))` no fim da entrada devolve só o
-/// primeiro dígito (`"123"` vira `"1"`), e o resto some.
+/// Usa `take_while` em vez de `digit0`: no `nom` 8.0.0, quando a entrada
+/// inteira é de dígitos, o `digit0` de `complete` devolve um resto vazio que
+/// aponta para o começo da entrada, e o `recognize`, que mede o consumo pela
+/// distância entre ponteiros, recorta errado (`"123"` vira `"1"`).
 fn int_digits(input: &str) -> IResult<&str, &str> {
     alt((
         tag("0"),
