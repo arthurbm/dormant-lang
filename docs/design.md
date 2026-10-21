@@ -391,12 +391,13 @@ flowchart LR
         EXPR --> LEX["lexical<br/>ident, int, float, string,<br/>palavras reservadas, símbolos"]
         PROG --> LEX
         STMT --> LEX
+        STMT -.->|"Type, em VarDecl"| PROG
     end
     PROG --> AST["AST<br/>(src/ast.rs)"]
     PROG -.->|"erro"| ERR["ParseError<br/>linha, coluna, mensagem"]
 ```
 
-As setas indicam quem chama quem. Cada não terminal da gramática é uma função pública com a assinatura de parser do `nom` (recebe o texto, devolve o resto e o valor reconhecido, ou um erro), e os testes de unidade chamam essas funções diretamente. A porta de entrada é `parse_program(texto) -> Result<Program, ParseError>`, usada pela CLI e pelos testes dos programas de exemplo.
+As setas indicam quem chama quem; a tracejada é a única volta: `VarDecl` usa a regra `Type`, que mora em `program` junto com as outras regras das funções. Cada não terminal da gramática é uma função pública com a assinatura de parser do `nom` (recebe o texto, devolve o resto e o valor reconhecido, ou um erro), e os testes de unidade chamam essas funções diretamente. A porta de entrada é `parse_program(texto) -> Result<Program, ParseError>`, usada pela CLI e pelos testes dos programas de exemplo.
 
 - **Camada léxica sem lexer separado.** Não existe uma fase que transforma o texto numa lista de tokens antes do parser. Cada parser de token reconhece o próprio texto e depois consome o espaço e os comentários `//` que vêm em seguida; só o começo do arquivo precisa de um consumo explícito. No diagrama do pipeline (`docs/diagrams/pipeline.png`), as caixas "Lexer" e "Parser" são essas duas camadas do mesmo parser, não duas passagens.
 - **Palavras reservadas por palavra inteira.** `while` só casa se o caractere seguinte não puder continuar um identificador, então `whilex` é um nome. Os nomes de tipo (`int`, `string`…) e `Promise` não são reservados: chegam ao verificador como identificadores.

@@ -13,6 +13,7 @@ pub struct Program {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub export: bool,
+    /// Se a função é `async` (o nome não pode ser `async`, palavra reservada em Rust).
     pub is_async: bool,
     pub name: String,
     pub params: Vec<Param>,
@@ -74,7 +75,7 @@ pub enum Stmt {
     /// `return e;` ou `return;`
     Return(Option<Expr>),
     /// `v;`, como `await sleep(DIA);` ou `console.log(x);`
-    Expr(Value),
+    ExprStmt(Value),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

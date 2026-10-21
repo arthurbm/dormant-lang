@@ -8,7 +8,7 @@ Notação EBNF: `a?` opcional, `a*` zero ou mais, `a | b` alternativa, `( … )`
 ident      ::= [A-Za-z_] [A-Za-z0-9_]*          (* exceto palavras reservadas *)
 int        ::= "0" | [1-9] [0-9]*
 float      ::= ( "0" | [1-9] [0-9]* ) "." [0-9]+
-string     ::= '"' ( [^"\\\n] | "\\" . )* '"'
+string     ::= '"' ( [^"\\\r\n] | "\\" . )* '"'
 whitespace ::= [ \t\r\n]+                         (* descartado *)
 comment    ::= "//" [^\n]*                        (* descartado *)
 ```

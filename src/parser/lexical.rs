@@ -28,7 +28,7 @@ fn is_ident_start(c: char) -> bool {
     c.is_ascii_alphabetic() || c == '_'
 }
 
-fn is_ident_char(c: char) -> bool {
+pub(crate) fn is_ident_char(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
@@ -90,8 +90,8 @@ pub fn symbol<'a>(
 }
 
 /// O `ErrorKind` que só o [`semicolon`] produz quando falha. É por ele que o
-/// `ParseError` sabe que o erro é um `;` faltando. Nenhum outro parser cujo
-/// erro chega ao topo pode usar `char`: a aspa que fecha uma string usa `tag`.
+/// `ParseError` sabe que o erro é um `;` faltando. Por isso o [`semicolon`] é
+/// o único parser deste crate feito com `char`; os demais usam `tag`.
 pub const EXPECTED_SEMICOLON: ErrorKind = ErrorKind::Char;
 
 /// O `;` que termina um comando. Usa `char`, e não [`symbol`], para que a
@@ -135,22 +135,22 @@ pub fn int(input: &str) -> IResult<&str, i64> {
 /// `float ::= ( "0" | [1-9] [0-9]* ) "." [0-9]+`, como `f64`.
 pub fn float(input: &str) -> IResult<&str, f64> {
     lexeme(map_res(
-        recognize((int_digits, char('.'), take_while1(is_digit))),
+        recognize((int_digits, tag("."), take_while1(is_digit))),
         str::parse::<f64>,
     ))
     .parse(input)
 }
 
-/// `string ::= '"' ( [^"\\\n] | "\\" . )* '"'`. Guarda o texto entre as
+/// `string ::= '"' ( [^"\\\r\n] | "\\" . )* '"'`. Guarda o texto entre as
 /// aspas como foi escrito, com os escapes intactos, para que o gerador de
 /// JavaScript possa copiá-lo. Depois da aspa de abertura o parser usa `cut`:
 /// uma string sem fechar é erro no ponto em que ela acaba, não no começo.
 pub fn string(input: &str) -> IResult<&str, String> {
     let content = recognize(many0(alt((
-        value((), none_of("\"\\\n")),
-        value((), pair(char('\\'), anychar)),
+        value((), none_of("\"\\\r\n")),
+        value((), pair(tag("\\"), anychar)),
     ))));
-    lexeme(preceded(char('"'), cut(terminated(content, tag("\"")))))
+    lexeme(preceded(tag("\""), cut(terminated(content, tag("\"")))))
         .map(str::to_string)
         .parse(input)
 }

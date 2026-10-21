@@ -112,3 +112,10 @@ fn operadores_casam_pelo_mais_longo() {
     assert_eq!(symbol("=").parse("= b"), Ok(("b", "=")));
     assert_eq!(symbol("!").parse("!x"), Ok(("x", "!")));
 }
+
+#[test]
+fn string_recusa_quebra_de_linha_crua_inclusive_cr() {
+    // O TypeScript não aceita `\r` cru dentro de uma string.
+    assert!(string("\"a\rb\"").is_err());
+    assert_eq!(string(r#""a\rb""#), Ok(("", r"a\rb".to_string())));
+}

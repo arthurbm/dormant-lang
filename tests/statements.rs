@@ -103,7 +103,7 @@ fn assign_nao_casa_com_igualdade_estrita() {
     assert!(matches!(assign("x === 1;"), Err(Err::Error(_))));
     assert_eq!(
         stmt("x === 1;"),
-        Ok(("", Stmt::Expr(plain(bin(StrictEq, id("x"), int(1))))))
+        Ok(("", Stmt::ExprStmt(plain(bin(StrictEq, id("x"), int(1))))))
     );
     assert_eq!(
         stmt("x = 1;"),
@@ -123,7 +123,7 @@ fn expr_stmt_com_e_sem_await() {
         expr_stmt("await sleep(3 * DIA);"),
         Ok((
             "",
-            Stmt::Expr(awaited(call(
+            Stmt::ExprStmt(awaited(call(
                 id("sleep"),
                 vec![bin(Mul, int(3), id("DIA"))]
             )))
@@ -133,7 +133,7 @@ fn expr_stmt_com_e_sem_await() {
         expr_stmt("console.log(x);"),
         Ok((
             "",
-            Stmt::Expr(plain(call(member(id("console"), "log"), vec![id("x")])))
+            Stmt::ExprStmt(plain(call(member(id("console"), "log"), vec![id("x")])))
         ))
     );
 }
@@ -147,14 +147,14 @@ fn expr_stmt_await_so_no_comeco() {
 fn expr_stmt_diretiva_dentro_de_bloco_e_string() {
     assert_eq!(
         stmt(r#""use step";"#),
-        Ok(("", Stmt::Expr(plain(str_lit("use step")))))
+        Ok(("", Stmt::ExprStmt(plain(str_lit("use step")))))
     );
 }
 
 // ---------- If ----------
 
 fn call_stmt(f: &str) -> Stmt {
-    Stmt::Expr(plain(call(id(f), vec![])))
+    Stmt::ExprStmt(plain(call(id(f), vec![])))
 }
 
 #[test]

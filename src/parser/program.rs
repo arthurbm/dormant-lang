@@ -27,25 +27,27 @@ pub fn program(input: &str) -> IResult<&str, Program> {
 
 /// `Function ::= "export"? "async"? "function" ident "(" Params? ")" ":" Type FunctionBody`
 ///
-/// O `cut` vem depois de `function`: dali em diante o texto só pode ser
-/// uma função.
+/// O `cut` vem depois de `function`, ou já depois de `export`/`async`: dali
+/// em diante o texto só pode ser uma função.
 pub fn function(input: &str) -> IResult<&str, Function> {
+    let (input, (export, is_async)) =
+        (opt(keyword("export")), opt(keyword("async"))).parse(input)?;
+    let (input, _) = if export.is_some() || is_async.is_some() {
+        cut(keyword("function")).parse(input)?
+    } else {
+        keyword("function").parse(input)?
+    };
     map(
-        (
-            opt(keyword("export")),
-            opt(keyword("async")),
-            keyword("function"),
-            cut((
-                ident,
-                symbol("("),
-                opt(params),
-                symbol(")"),
-                symbol(":"),
-                type_,
-                function_body,
-            )),
-        ),
-        |(export, is_async, _, (name, _, params, _, _, return_type, (directive, body)))| Function {
+        cut((
+            ident,
+            symbol("("),
+            opt(params),
+            symbol(")"),
+            symbol(":"),
+            type_,
+            function_body,
+        )),
+        |(name, _, params, _, _, return_type, (directive, body))| Function {
             export: export.is_some(),
             is_async: is_async.is_some(),
             name: name.to_string(),
