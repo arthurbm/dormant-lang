@@ -10,13 +10,13 @@ use nom::{
     IResult, Parser,
     branch::alt,
     combinator::{cut, map, opt, value},
-    multi::many0,
+    multi::many_till,
     sequence::{preceded, terminated},
 };
 
 use crate::ast::{Block, DeclKind, Else, If, Stmt, Value};
 use crate::parser::expressions::expr;
-use crate::parser::lexical::{ident, keyword, symbol};
+use crate::parser::lexical::{ident, keyword, semicolon, symbol};
 use crate::parser::program::type_;
 
 /// `Stmt ::= VarDecl | Assign | If | While | Return | ExprStmt`
@@ -50,7 +50,7 @@ pub fn var_decl(input: &str) -> IResult<&str, Stmt> {
                 opt(preceded(symbol(":"), type_)),
                 symbol("="),
                 value_expr,
-                symbol(";"),
+                semicolon,
             )),
         ),
         |(kind, (name, ty, _, value, _))| Stmt::VarDecl {
@@ -71,7 +71,7 @@ pub fn var_decl(input: &str) -> IResult<&str, Stmt> {
 /// O `=` de [`symbol`] não casa com o começo de `===`.
 pub fn assign(input: &str) -> IResult<&str, Stmt> {
     map(
-        (ident, symbol("="), cut(terminated(value_expr, symbol(";")))),
+        (ident, symbol("="), cut(terminated(value_expr, semicolon))),
         |(name, _, value)| Stmt::Assign {
             name: name.to_string(),
             value,
@@ -82,7 +82,7 @@ pub fn assign(input: &str) -> IResult<&str, Stmt> {
 
 /// `ExprStmt ::= Value ";"`
 pub fn expr_stmt(input: &str) -> IResult<&str, Stmt> {
-    map(terminated(value_expr, symbol(";")), Stmt::Expr).parse(input)
+    map(terminated(value_expr, semicolon), Stmt::Expr).parse(input)
 }
 
 /// `Value ::= "await"? Expr`
@@ -143,7 +143,7 @@ pub fn while_stmt(input: &str) -> IResult<&str, Stmt> {
 /// `Return ::= "return" Expr? ";"`
 pub fn return_stmt(input: &str) -> IResult<&str, Stmt> {
     map(
-        preceded(keyword("return"), cut(terminated(opt(expr), symbol(";")))),
+        preceded(keyword("return"), cut(terminated(opt(expr), semicolon))),
         Stmt::Return,
     )
     .parse(input)
@@ -151,5 +151,16 @@ pub fn return_stmt(input: &str) -> IResult<&str, Stmt> {
 
 /// `Block ::= "{" Stmt* "}"`
 pub fn block(input: &str) -> IResult<&str, Block> {
-    preceded(symbol("{"), cut(terminated(many0(stmt), symbol("}")))).parse(input)
+    preceded(symbol("{"), cut(stmts_until_brace)).parse(input)
+}
+
+/// `Stmt* "}"`, para [`block`] e para o corpo de uma função.
+///
+/// Usa `many_till` em vez de `terminated(many0(stmt), "}")`. A cada volta ele
+/// tenta o `}` e, se não for, um `Stmt`. Se o `Stmt` falhar, o erro devolvido
+/// é o dele, no ponto exato da falha (`x++;` acusa o `++`). Com `many0`, o
+/// erro do `Stmt` seria descartado e sobraria só "esperava `}`" no começo do
+/// comando.
+pub(crate) fn stmts_until_brace(input: &str) -> IResult<&str, Block> {
+    map(many_till(stmt, symbol("}")), |(stmts, _)| stmts).parse(input)
 }

@@ -12,7 +12,7 @@ use nom::{
     bytes::complete::{tag, take_till, take_while, take_while1},
     character::complete::{anychar, char, multispace1, none_of, one_of, satisfy},
     combinator::{cut, map_res, not, recognize, value, verify},
-    error::Error,
+    error::{Error, ErrorKind},
     multi::many0,
     sequence::{pair, preceded, terminated},
 };
@@ -89,6 +89,17 @@ pub fn symbol<'a>(
     ))
 }
 
+/// O `ErrorKind` que só o [`semicolon`] produz quando falha. É por ele que o
+/// `ParseError` sabe que o erro é um `;` faltando. Nenhum outro parser cujo
+/// erro chega ao topo pode usar `char`: a aspa que fecha uma string usa `tag`.
+pub const EXPECTED_SEMICOLON: ErrorKind = ErrorKind::Char;
+
+/// O `;` que termina um comando. Usa `char`, e não [`symbol`], para que a
+/// falha tenha o `ErrorKind` [`EXPECTED_SEMICOLON`].
+pub fn semicolon(input: &str) -> IResult<&str, char> {
+    lexeme(char(';')).parse(input)
+}
+
 /// `ident ::= [A-Za-z_] [A-Za-z0-9_]*`, exceto as palavras reservadas.
 pub fn ident(input: &str) -> IResult<&str, &str> {
     lexeme(verify(
@@ -139,7 +150,7 @@ pub fn string(input: &str) -> IResult<&str, String> {
         value((), none_of("\"\\\n")),
         value((), pair(char('\\'), anychar)),
     ))));
-    lexeme(preceded(char('"'), cut(terminated(content, char('"')))))
+    lexeme(preceded(char('"'), cut(terminated(content, tag("\"")))))
         .map(str::to_string)
         .parse(input)
 }

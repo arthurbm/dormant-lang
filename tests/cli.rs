@@ -34,7 +34,10 @@ fn parse_de_arquivo_invalido_imprime_arquivo_linha_coluna_e_sai_com_1() {
     let out = dormant(&["parse", path]);
     assert_eq!(out.status.code(), Some(1));
     let text = stderr(&out);
-    assert!(text.starts_with(&format!("{path}:3:3: ")), "stderr: {text}");
+    assert!(
+        text.starts_with(&format!("{path}:2:12: ")),
+        "stderr: {text}"
+    );
     assert!(stdout(&out).is_empty());
 }
 
