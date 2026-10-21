@@ -19,3 +19,17 @@ Um subconjunto sintático de TypeScript com semântica estendida para workflows 
 - `docs/roadmap.md`: as quatro Entregas (compilador base + camada durável), status e riscos. Leia ao decidir o que fazer a seguir; atualize o status ao concluir uma etapa.
 - `docs/research/`: pesquisas com fontes primárias sobre sistemas relacionados e o registro da escolha da tese. Consulte antes de pesquisar um sistema, pois a pesquisa pode já existir; novas pesquisas entram aqui, no formato dos arquivos existentes.
 - `docs/references.md`: fontes e por que importam. Leia ao pesquisar e registre ali o que encontrar.
+
+## Agent skills
+
+### Issue tracker
+
+As issues ficam no GitHub Issues de `arthurbm/dormant-lang`, via `gh` CLI. Veja `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Usamos as cinco labels canônicas, com os nomes padrão (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Veja `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Layout single-context: um `GLOSSARY.md` e `docs/adr/` na raiz. Veja `docs/agents/domain.md`.
