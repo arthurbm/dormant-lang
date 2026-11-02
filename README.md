@@ -69,3 +69,4 @@ Em desenvolvimento como projeto da disciplina de Construção de Compiladores (C
 - [Decisões (ADRs)](docs/adr/): por que snapshot compilado, por que TypeScript válido, por que Rust com alvo JavaScript, o que fica fora da v1.
 - [Pesquisas](docs/research/) e [referências](docs/references.md): sistemas relacionados, com fontes primárias.
 - [Glossário](GLOSSARY.md).
+- [Identidade visual](docs/visual-identity.md). Logo do dragão e conceito das variáveis como chaminhas.
