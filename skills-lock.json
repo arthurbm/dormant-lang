@@ -151,6 +151,18 @@
       "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
       "computedHash": "43766f53afe7eb9feba0bb7716590c35cbb8d39d4a91eddef50e9566a6f6ae19"
     },
+    "slidev": {
+      "source": "slidevjs/slidev",
+      "sourceType": "github",
+      "skillPath": "skills/slidev/SKILL.md",
+      "computedHash": "745f8fbe6bd26c17699efff608548560e6d4b5ca65dbcff70d394f9d6f6374aa"
+    },
+    "slidev-addon-pele": {
+      "source": "arthurbm/slidev-addon-pele",
+      "sourceType": "github",
+      "skillPath": "skills/slidev-addon-pele/SKILL.md",
+      "computedHash": "6758f35297a9993186ee9e31a9ee6ca43c99d4186785f2d2eb20830e29092bc1"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
