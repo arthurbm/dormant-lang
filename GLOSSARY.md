@@ -28,6 +28,10 @@ _Avoid_: fotografia
 O registro salvo por um Snapshot: o estado atual da máquina de estados e os valores das variáveis vivas naquele Ponto de suspensão.
 _Avoid_: dump, imagem da memória
 
+**Variável viva**:
+Uma variável cujo valor ainda pode ser lido depois de um ponto do programa. Num Ponto de suspensão, as variáveis vivas são o conteúdo do Checkpoint.
+_Avoid_: estado vivo, variável ativa
+
 **Layout de Checkpoints**:
 A descrição dos Checkpoints que um Workflow pode gravar: para cada Ponto de suspensão, as variáveis vivas e seus tipos.
 _Avoid_: schema, formato do estado
