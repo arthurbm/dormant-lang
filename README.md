@@ -1,6 +1,6 @@
 # Dormant
 
-![Logo do Dormant com o dragão vermelho adormecido](assets/branding/dormant-logo.png)
+![Dragão do Dormant adormecido, protegendo pequenas chamas animadas](assets/branding/dormant-dragon-animated.gif)
 
 **Workflows duráveis compilados.** Um subconjunto de TypeScript em que funções podem pausar por horas ou dias e retomar exatamente de onde pararam, mesmo depois que o processo reinicia, e em que o compilador decide sozinho o que precisa ser salvo.
 
