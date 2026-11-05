@@ -62,6 +62,16 @@ tests/fixtures/invalid/missing-semicolon.ts:2:12: esperava `;`, encontrou `conso
 
 Em desenvolvimento como projeto da disciplina de Construção de Compiladores (CIn-UFPE, 2026.2). A Entrega 2 está implementada: o parser da v1 em `nom` (`src/parser/`), a AST (`src/ast.rs`), a CLI `dormant parse` e a suíte de testes (`tests/`). A próxima etapa é o verificador de tipos e o interpretador com Replay. Veja o [roadmap](docs/roadmap.md).
 
+## Mascote
+
+O Dormant é representado por um dragão vermelho adormecido, protegendo chamas que podem ilustrar variáveis vivas. Dois estudos animados mostram essa direção visual:
+
+| O dragão dorme | As chaminhas se multiplicam |
+| --- | --- |
+| ![Dragão Dormant adormecido protegendo uma chama](assets/branding/dormant-dragon-sleep.gif) | ![Dragão Dormant com três chaminhas animadas](assets/branding/dormant-dragon-flames.gif) |
+
+Esses GIFs são estudos conceituais. A [logo estática aprovada](assets/branding/dormant-logo.png) continua sendo a referência oficial; a [documentação da identidade visual](docs/visual-identity.md) detalha as animações, os limites da metáfora e a orientação para novas gerações com Images 2.6.
+
 ## Documentação
 
 - [Design](docs/design.md): a linguagem, a tese, a arquitetura e o escopo da v1.
