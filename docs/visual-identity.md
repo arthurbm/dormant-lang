@@ -10,9 +10,11 @@ O arquivo original aprovado está em [`assets/branding/dormant-logo.png`](../ass
 
 ## Versão animada
 
+![Dragão do Dormant adormecido protegendo chamas que se multiplicam e se apagam](../assets/branding/dormant-dragon-animated.gif)
+
 A animação complementar usa o mesmo conceito do mascote adormecido. A chama central se agita, pequenas chamas aparecem e se multiplicam, uma se apaga e as restantes continuam abrigadas no corpo do dragão. O ciclo se repete e ilustra visualmente a ideia de preservar variáveis vivas durante uma suspensão, sem afirmar uma correspondência formal entre ações do dragão e operações do compilador.
 
-O GIF proposto é uma mídia complementar à logo estática aprovada. A mídia animada deve ser adicionada ao repositório em `assets/branding/dormant-dragon-animated.gif` antes de ser incorporada ao README; o original continua como referência principal da marca.
+O GIF está em [`assets/branding/dormant-dragon-animated.gif`](../assets/branding/dormant-dragon-animated.gif) e é uma mídia complementar, sem substituir a logo estática aprovada, que permanece como referência principal da marca. A versão animada tem 12 quadros, loop contínuo e dimensões compactas para uso no README.
 
 ## Variáveis como chaminhas
 
